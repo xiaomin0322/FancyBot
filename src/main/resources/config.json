@@ -1,0 +1,13 @@
+{
+  "MYSQL_HOST": "localhost",
+  "MYSQL_PORT": "3306",
+  "MYSQL_BASE": "fancybot",
+  "MYSQL_USER": "root",
+  "MYSQL_PASS": "",
+
+  "BOT_TOKEN": "",
+  "YOUTUBE_SECRET": "",
+  "GENIUS_SECRET": "",
+  "SPOTIFY_CLIENT": "",
+  "SPOTIFY_SECRET": ""
+}
