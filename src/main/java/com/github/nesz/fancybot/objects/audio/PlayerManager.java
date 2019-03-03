@@ -1,6 +1,9 @@
 package com.github.nesz.fancybot.objects.audio;
 
 import com.github.nesz.fancybot.FancyBot;
+import com.github.nesz.fancybot.objects.guild.GuildInfo;
+import com.github.nesz.fancybot.objects.guild.GuildManager;
+import com.github.nesz.fancybot.objects.translation.Messages;
 import com.sedmelluq.discord.lavaplayer.player.AudioConfiguration;
 import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
@@ -77,11 +80,14 @@ public class PlayerManager {
         }
         player.queue(track.makeClone());
         if (!playlist) {
+            GuildInfo guildInfo = GuildManager.getOrCreate(textChannel.getGuild().getIdLong());
+            String nowPlaying = Messages.MUSIC_NOW_PLAYING.get(guildInfo.getLang());
+            String queued = Messages.MUSIC_QUEUED_SONG.get(guildInfo.getLang());
             MessageEmbed eb = new EmbedBuilder()
                     .setColor(Color.BLACK)
                     .addField(player.getQueue().size() == 0 ?
-                            "Now playing" :
-                            "Queued", "[" + track.getInfo().title + "]" +
+                            nowPlaying : queued,
+                            "[" + track.getInfo().title + "]" +
                             "(" + track.getInfo().uri + ") [ @" + user.getEffectiveName() + " ]", true)
                     .build();
             textChannel.sendMessage(eb).queue();
@@ -90,7 +96,7 @@ public class PlayerManager {
 
     public static void loadAndPlay(TextChannel textChannel, String trackUrl, Member user, boolean isPlaylist) {
         Player player = getOrCreate(textChannel, user.getVoiceState().getChannel());
-
+        GuildInfo guildInfo = GuildManager.getOrCreate(textChannel.getGuild().getIdLong());
         audioManager.loadItemOrdered(audioManager, trackUrl, new AudioLoadResultHandler() {
 
             @Override
@@ -102,7 +108,9 @@ public class PlayerManager {
             public void playlistLoaded(AudioPlaylist playlist) {
                 MessageEmbed eb = new EmbedBuilder()
                         .setColor(Color.BLACK)
-                        .appendDescription("loaded " + playlist.getTracks().size() + " songs \n")
+                        .appendDescription(Messages.MUSIC_LOADED_PLAYLIST
+                                .get(guildInfo.getLang())
+                                .replace("{SONGS}", String.valueOf(playlist.getTracks().size())))
                         .build();
                 textChannel.sendMessage(eb).queue();
                 for (AudioTrack track : playlist.getTracks()) {
@@ -112,12 +120,12 @@ public class PlayerManager {
 
             @Override
             public void noMatches() {
-                textChannel.sendMessage("Nothing found").queue();
+                textChannel.sendMessage(Messages.MUSIC_NOTHING_FOUND.get(guildInfo.getLang())).queue();
             }
 
             @Override
             public void loadFailed(FriendlyException exception) {
-                textChannel.sendMessage("Couldn't play, reason: " + exception.getMessage()).queue();
+                textChannel.sendMessage(Messages.MUSIC_CANNOT_LOAD.get(guildInfo.getLang()) + " " + exception.getMessage()).queue();
                 FancyBot.LOG.error("[PLAYER] Couldn't play, reason: ", exception);
             }
         });

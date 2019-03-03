@@ -2,6 +2,9 @@ package com.github.nesz.fancybot.objects.command;
 
 import com.github.nesz.fancybot.FancyBot;
 import com.github.nesz.fancybot.commands.AbstractCommand;
+import com.github.nesz.fancybot.objects.guild.GuildInfo;
+import com.github.nesz.fancybot.objects.guild.GuildManager;
+import com.github.nesz.fancybot.objects.translation.Messages;
 import com.github.nesz.fancybot.utils.Reflections;
 import net.dv8tion.jda.core.Permission;
 import net.dv8tion.jda.core.entities.Member;
@@ -10,10 +13,7 @@ import net.dv8tion.jda.core.entities.TextChannel;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class CommandManager {
 
@@ -66,17 +66,28 @@ public class CommandManager {
             return;
         }
 
-        if (!self.hasPermission(channel, Permission.MESSAGE_EMBED_LINKS)) {
-            channel.sendMessage("I'm missing permission **" + Permission.MESSAGE_EMBED_LINKS.getName() + "** so I can't work properly.").queue();
-        }
-
-        if (!self.hasPermission(channel, Permission.MESSAGE_ADD_REACTION)) {
-            channel.sendMessage("I'm missing permission **" + Permission.MESSAGE_ADD_REACTION.getName() + "** so I can't work properly.").queue();
-        }
-
         String commandName = filterPrefix(input[0]).toLowerCase();
-
         AbstractCommand command = commands.containsKey(commandName) ? commands.get(commandName) : commandsAliases.get(commandName);
+
+        boolean hasPermissions = true;
+        Set<String> missingPermissions = new HashSet<>();
+        for (Permission permission : command.getRequiredPermissions()) {
+            if (self.hasPermission(permission)) {
+                continue;
+            }
+            missingPermissions.add(permission.name());
+            hasPermissions = false;
+        }
+
+        if (!hasPermissions) {
+            GuildInfo guildInfo = GuildManager.getOrCreate(channel.getIdLong());
+            channel.sendMessage(Messages.NOT_ENOUGH_PERMISSIONS
+                    .get(guildInfo.getLang())
+                    .replace("{PERMISSIONS}", String.join(", ", missingPermissions)))
+                    .queue();
+            return;
+        }
+
         command.execute(message, Arrays.copyOfRange(input, 1, input.length), channel, member);
     }
 }

@@ -1,5 +1,8 @@
 package com.github.nesz.fancybot.objects.audio;
 
+import com.github.nesz.fancybot.objects.guild.GuildInfo;
+import com.github.nesz.fancybot.objects.guild.GuildManager;
+import com.github.nesz.fancybot.objects.translation.Messages;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.player.event.AudioEventAdapter;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
@@ -103,7 +106,9 @@ public class Player extends AudioEventAdapter {
         audioPlayer.startTrack(queue.poll(), false);
         if (notifications) {
             AudioTrackInfo info = audioPlayer.getPlayingTrack().getInfo();
-            eb.setDescription("Now playing [" + info.title + "](" + info.uri + ")");
+            GuildInfo guildInfo = GuildManager.getOrCreate(getGuild().getIdLong());
+            String translated = Messages.MUSIC_NOW_PLAYING.get(guildInfo.getLang());
+            eb.setDescription(translated + " [" + info.title + "](" + info.uri + ")");
             triggerChannel.sendMessage(eb.build()).queue(message ->
                     message.delete().queueAfter(info.length, TimeUnit.MILLISECONDS));
         }

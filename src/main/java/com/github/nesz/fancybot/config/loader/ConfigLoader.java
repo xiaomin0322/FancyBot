@@ -30,25 +30,25 @@ public class ConfigLoader {
     }
 
     public void override() {
-        ClassLoader classLoader = ClassLoader.getSystemClassLoader();
-        String path = classLoader.getResource("config.json").getPath();
-        String json = "";
+        try {
+            ClassLoader classLoader = ClassLoader.getSystemClassLoader();
+            String path = classLoader.getResource(file + ".json").getPath();
+            String json = "";
 
-        try (BufferedReader br = Files.newBufferedReader(Paths.get(path))) {
-            json += br.lines().collect(Collectors.joining());
-        } catch (IOException e) {
-            FancyBot.LOG.debug("Error occurred while accessing config file", e);
-        }
-
-        JSONObject jo = new JSONObject(json);
-
-        Config temp = new Config();
-        fields.forEach(field -> {
-            try {
-                field.set(temp, jo.getString(field.getName()));
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
+            try (BufferedReader br = Files.newBufferedReader(Paths.get(path))) {
+                json += br.lines().collect(Collectors.joining());
+            } catch (IOException e) {
+                FancyBot.LOG.debug("Error occurred while accessing config file", e);
             }
-        });
+
+            JSONObject jo = new JSONObject(json);
+
+            Object temp = configClass.newInstance();
+            for (Field field : fields) {
+                field.set(temp, jo.getString(field.getName()));
+            }
+        } catch (InstantiationException | IllegalAccessException e) {
+            e.printStackTrace();
+        }
     }
 }

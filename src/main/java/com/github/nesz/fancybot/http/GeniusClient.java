@@ -32,7 +32,11 @@ public class GeniusClient extends HTTPClient {
             if (response.body() == null) {
                 return null;
             }
-            return new JSONObject(response.body().string()).getJSONObject("response").getJSONArray("hits").getJSONObject(0).getJSONObject("result").getString("url");
+            JSONObject jsonResponse = new JSONObject(response.body().string());
+            if (!jsonResponse.has("hits")) {
+                return null;
+            }
+            return jsonResponse.getJSONArray("hits").getJSONObject(0).getJSONObject("result").getString("url");
         } catch (IOException | JSONException e) {
             FancyBot.LOG.error("[GeniusClient] An error occurred while searching for lyrics!", e);
             return null;
@@ -45,12 +49,12 @@ public class GeniusClient extends HTTPClient {
                 .build();
         try (Response response = HTTP_CLIENT.newCall(request).execute()) {
             if (response.body() == null) {
-                return "Something went wrong while fetching lyrics ...";
+                return null;
             }
             Document doc = Jsoup.parse(response.body().string());
             Elements lyrics = doc.select("div.lyrics");
             if (!lyrics.hasText()) {
-                return "Something went wrong while fetching lyrics ...";
+                return null;
             }
             return Jsoup.clean(lyrics.html(), Whitelist.none().addTags("br")).trim().replace("<br> ", "");
         } catch (IOException | JSONException e) {
