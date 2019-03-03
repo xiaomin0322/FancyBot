@@ -4,6 +4,7 @@ import com.github.nesz.fancybot.FancyBot;
 import com.github.nesz.fancybot.objects.guild.GuildInfo;
 import com.github.nesz.fancybot.objects.guild.GuildManager;
 import com.github.nesz.fancybot.objects.translation.Messages;
+import com.github.nesz.fancybot.utils.CollectionUtils;
 import com.sedmelluq.discord.lavaplayer.player.AudioConfiguration;
 import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
@@ -18,10 +19,13 @@ import net.dv8tion.jda.core.entities.*;
 import net.dv8tion.jda.core.managers.AudioManager;
 
 import java.awt.*;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class PlayerManager {
+
+    public static final int MAX_QUEUE_SIZE = 500;
 
     private static final AudioPlayerManager audioManager = new DefaultAudioPlayerManager();
     private static final Map<Long, Player> PLAYERS = new ConcurrentHashMap<>();
@@ -88,7 +92,7 @@ public class PlayerManager {
                     .addField(player.getQueue().size() == 0 ?
                             nowPlaying : queued,
                             "[" + track.getInfo().title + "]" +
-                            "(" + track.getInfo().uri + ") [ @" + user.getEffectiveName() + " ]", true)
+                            "(" + track.getInfo().uri + ") [ " + user.getAsMention() + " ]", true)
                     .build();
             textChannel.sendMessage(eb).queue();
         }
@@ -106,14 +110,20 @@ public class PlayerManager {
 
             @Override
             public void playlistLoaded(AudioPlaylist playlist) {
+                int able = (MAX_QUEUE_SIZE - player.getQueue().size()) - playlist.getTracks().size();
+                if (able < 0) {
+                    textChannel.sendMessage(Messages.QUEUE_LIMIT_REACHED.get(guildInfo.getLang())).queue();
+                    return;
+                }
+                List<AudioTrack> tracks = CollectionUtils.safeSubList(playlist.getTracks(), 0, able);
                 MessageEmbed eb = new EmbedBuilder()
                         .setColor(Color.BLACK)
                         .appendDescription(Messages.MUSIC_LOADED_PLAYLIST
                                 .get(guildInfo.getLang())
-                                .replace("{SONGS}", String.valueOf(playlist.getTracks().size())))
+                                .replace("{SONGS}", String.valueOf(tracks.size())))
                         .build();
                 textChannel.sendMessage(eb).queue();
-                for (AudioTrack track : playlist.getTracks()) {
+                for (AudioTrack track : tracks) {
                     play(player, track, user, textChannel, true);
                 }
             }

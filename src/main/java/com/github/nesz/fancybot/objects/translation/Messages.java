@@ -14,7 +14,9 @@ public enum Messages {
     YOU_HAVE_TO_BE_IN_MY_VOICE_CHANNEL("musicYouHaveToBeInMyVoiceChannel"),
     LANGUAGE_NOT_FOUND("languageNotFound"),
     LANGUAGE_CHANGED("languageChanged"),
-    LYRICS_NOT_FOUND("lyricsNotFound");
+    LYRICS_NOT_FOUND("lyricsNotFound"),
+    QUEUE_LIMIT_REACHED("queueLimitReached"),
+    QUEUE_THERE_IS_NO_PREVIOUS_SONG("queueThereIsNoPreviousSong");
 
 
 

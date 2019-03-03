@@ -2,6 +2,7 @@ package com.github.nesz.fancybot.commands.audio;
 
 import com.github.nesz.fancybot.FancyBot;
 import com.github.nesz.fancybot.commands.AbstractCommand;
+import com.github.nesz.fancybot.objects.audio.Player;
 import com.github.nesz.fancybot.objects.audio.PlayerManager;
 import com.github.nesz.fancybot.objects.guild.GuildInfo;
 import com.github.nesz.fancybot.objects.guild.GuildManager;
@@ -57,6 +58,14 @@ public class PlayCommand extends AbstractCommand {
         }
 
         GuildInfo guildInfo = GuildManager.getOrCreate(textChannel.getGuild().getIdLong());
+        if (PlayerManager.isPlaying(textChannel)) {
+            Player player = PlayerManager.getExisting(textChannel);
+            if (player.getQueue().size() >= PlayerManager.MAX_QUEUE_SIZE) {
+                textChannel.sendMessage(Messages.QUEUE_LIMIT_REACHED.get(guildInfo.getLang())).queue();
+                return;
+            }
+        }
+
         if (!member.getVoiceState().inVoiceChannel()) {
             textChannel.sendMessage(Messages.YOU_HAVE_TO_BE_IN_VOICE_CHANNEL.get(guildInfo.getLang())).queue();
             return;

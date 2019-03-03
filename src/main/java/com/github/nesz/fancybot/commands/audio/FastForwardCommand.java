@@ -7,6 +7,7 @@ import com.github.nesz.fancybot.objects.guild.GuildInfo;
 import com.github.nesz.fancybot.objects.guild.GuildManager;
 import com.github.nesz.fancybot.objects.translation.Messages;
 import com.github.nesz.fancybot.utils.StringUtils;
+import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.Permission;
 import net.dv8tion.jda.core.entities.Member;
@@ -18,17 +19,18 @@ import java.awt.*;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
-public class VolumeCommand extends AbstractCommand {
+public class FastForwardCommand extends AbstractCommand {
 
     @Override
     public String getCommand() {
-        return "volume";
+        return "fastforward";
     }
 
     @Override
     public Set<String> getAliases() {
-        return new HashSet<>(Collections.singletonList("vol"));
+        return new HashSet<>(Collections.singletonList("ff"));
     }
 
     @Override
@@ -39,28 +41,28 @@ public class VolumeCommand extends AbstractCommand {
     @Override
     public MessageEmbed getUsage() {
         return new EmbedBuilder()
-                .setAuthor(":: Volume Command ::", null, null)
+                .setAuthor(":: FastForward Command ::", null, null)
                 .setColor(Color.PINK)
                 .setDescription(
-                        "**Description:** Changes volume. \n" +
-                        "**Usage:** volume [VOLUME] \n" +
+                        "**Description:** skips music x seconds. \n" +
+                        "**Usage:** ff [SECONDS] \n" +
                         "**Aliases:** " + getAliases().toString())
                 .build();
     }
 
     @Override
     public void execute(Message message, String[] args, TextChannel textChannel, Member member) {
-        if (args.length < 1) {
-            textChannel.sendMessage(getUsage()).queue();
-            return;
-        }
-
-        if (!StringUtils.isNumeric(args[0])) {
+        if (args.length != 1) {
             textChannel.sendMessage(getUsage()).queue();
             return;
         }
 
         GuildInfo guildInfo = GuildManager.getOrCreate(textChannel.getGuild().getIdLong());
+        if (!StringUtils.isNumeric(args[0])) {
+            textChannel.sendMessage(getUsage()).queue();
+            return;
+        }
+
         if (!PlayerManager.isPlaying(textChannel)) {
             textChannel.sendMessage(Messages.MUSIC_NOT_PLAYING.get(guildInfo.getLang())).queue();
             return;
@@ -72,14 +74,15 @@ public class VolumeCommand extends AbstractCommand {
             return;
         }
 
-        int volume = Integer.parseInt(args[0]);
-        if (volume < 0) {
-            volume = 0;
+        AudioTrack track = player.getAudioPlayer().getPlayingTrack();
+        long ff = TimeUnit.SECONDS.toMillis(Long.parseLong(args[0]));
+        long position = track.getPosition();
+        long duration = track.getDuration();
+        long forwarded = position + ff;
+        if (forwarded >= duration) {
+            player.nextTrack();
+            return;
         }
-
-        textChannel.sendMessage(Messages.MUSIC_VOLUME_CHANGED.get(guildInfo.getLang()).replace("{VOLUME}", String.valueOf(volume))).queue();
-        guildInfo.setVolume(volume);
-        player.getAudioPlayer().setVolume(volume);
-        player.setVolume(volume);
+        track.setPosition(forwarded);
     }
 }

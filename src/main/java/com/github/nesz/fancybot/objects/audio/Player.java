@@ -3,6 +3,7 @@ package com.github.nesz.fancybot.objects.audio;
 import com.github.nesz.fancybot.objects.guild.GuildInfo;
 import com.github.nesz.fancybot.objects.guild.GuildManager;
 import com.github.nesz.fancybot.objects.translation.Messages;
+import com.google.common.collect.EvictingQueue;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.player.event.AudioEventAdapter;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
@@ -14,12 +15,14 @@ import net.dv8tion.jda.core.entities.TextChannel;
 import net.dv8tion.jda.core.entities.VoiceChannel;
 
 import java.awt.*;
+import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 public class Player extends AudioEventAdapter {
 
     private final LinkedBlockingQueue<AudioTrack> queue;
+    private final Queue<AudioTrack> previous;
     private final TextChannel triggerChannel;
     private final VoiceChannel voiceChannel;
     private final AudioPlayer audioPlayer;
@@ -35,6 +38,7 @@ public class Player extends AudioEventAdapter {
         this.triggerChannel = triggerChannel;
         this.voiceChannel   = voiceChannel;
         this.queue = new LinkedBlockingQueue<>();
+        this.previous = EvictingQueue.create(10);
         this.notifications = true;
         this.repeatMode = RepeatMode.NONE;
         this.volume = 100;
@@ -43,6 +47,10 @@ public class Player extends AudioEventAdapter {
 
     public LinkedBlockingQueue<AudioTrack> getQueue() {
         return queue;
+    }
+
+    public Queue<AudioTrack> getPrevious() {
+        return previous;
     }
 
     public TextChannel getTriggerChannel() {
@@ -95,9 +103,27 @@ public class Player extends AudioEventAdapter {
         }
     }
 
-    public void nextTrack() {
+    private void messageNotify() {
+        if (!notifications) {
+            return;
+        }
+        AudioTrackInfo info = audioPlayer.getPlayingTrack().getInfo();
+        GuildInfo guildInfo = GuildManager.getOrCreate(getGuild().getIdLong());
+        String translated = Messages.MUSIC_NOW_PLAYING.get(guildInfo.getLang());
         EmbedBuilder eb = new EmbedBuilder()
-                .setColor(Color.BLACK);
+                .setColor(Color.BLACK)
+                .setDescription(translated + " [" + info.title + "](" + info.uri + ")");
+
+        triggerChannel.sendMessage(eb.build()).queue(message ->
+                message.delete().queueAfter(info.length, TimeUnit.MILLISECONDS));
+    }
+
+    public void previousTrack() {
+        audioPlayer.startTrack(previous.poll(), false);
+        messageNotify();
+    }
+
+    public void nextTrack() {
 
         if (queue.isEmpty()) {
             if (audioPlayer.getPlayingTrack() != null) {
@@ -107,14 +133,7 @@ public class Player extends AudioEventAdapter {
         }
 
         audioPlayer.startTrack(queue.poll(), false);
-        if (notifications) {
-            AudioTrackInfo info = audioPlayer.getPlayingTrack().getInfo();
-            GuildInfo guildInfo = GuildManager.getOrCreate(getGuild().getIdLong());
-            String translated = Messages.MUSIC_NOW_PLAYING.get(guildInfo.getLang());
-            eb.setDescription(translated + " [" + info.title + "](" + info.uri + ")");
-            triggerChannel.sendMessage(eb.build()).queue(message ->
-                    message.delete().queueAfter(info.length, TimeUnit.MILLISECONDS));
-        }
+        messageNotify();
     }
 
     @Override
@@ -123,6 +142,7 @@ public class Player extends AudioEventAdapter {
             return;
         }
 
+        previous.offer(track.makeClone());
         switch (repeatMode) {
             case NONE:
                 nextTrack();

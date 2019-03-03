@@ -28,7 +28,6 @@ public class FancyBot extends HTTPClient {
         youTubeClient = new YouTubeClient(Config.YOUTUBE_SECRET);
         geniusClient = new GeniusClient(Config.GENIUS_SECRET);
 
-
         try {
             shardManager = new DefaultShardManagerBuilder()
                     .setHttpClient(HTTP_CLIENT)
