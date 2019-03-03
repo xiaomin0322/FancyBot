@@ -10,7 +10,7 @@ public class GuildManager {
     private static final Map<Long, GuildInfo> GUILD_INFO = new HashMap<>();
 
     public static GuildInfo getOrCreate(Long guildID) {
-        return GUILD_INFO.computeIfAbsent(guildID, v -> new GuildInfo(Lang.POLISH, 100));
+        return GUILD_INFO.computeIfAbsent(guildID, v -> new GuildInfo(Lang.ENGLISH, 100));
     }
 
     public static void remove(Long guildID) {

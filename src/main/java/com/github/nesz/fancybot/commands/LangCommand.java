@@ -1,10 +1,8 @@
-package com.github.nesz.fancybot.commands.audio;
+package com.github.nesz.fancybot.commands;
 
-import com.github.nesz.fancybot.FancyBot;
-import com.github.nesz.fancybot.commands.AbstractCommand;
-import com.github.nesz.fancybot.objects.audio.PlayerManager;
 import com.github.nesz.fancybot.objects.guild.GuildInfo;
 import com.github.nesz.fancybot.objects.guild.GuildManager;
+import com.github.nesz.fancybot.objects.translation.Lang;
 import com.github.nesz.fancybot.objects.translation.Messages;
 import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.Permission;
@@ -15,39 +13,38 @@ import net.dv8tion.jda.core.entities.TextChannel;
 
 import java.awt.*;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-public class PlayCommand extends AbstractCommand {
+public class LangCommand extends AbstractCommand {
 
     @Override
     public String getCommand() {
-        return "play";
+        return "language";
     }
 
     @Override
     public Set<String> getAliases() {
-        return new HashSet<>(Arrays.asList("pla", "start"));
+        return new HashSet<>(Collections.singletonList("lang"));
     }
 
     @Override
     public Set<Permission> getRequiredPermissions() {
-        return new HashSet<>(Arrays.asList(Permission.MESSAGE_EMBED_LINKS));
+        return Collections.emptySet();
     }
 
     @Override
     public MessageEmbed getUsage() {
         return new EmbedBuilder()
-                .setAuthor(":: Play Command ::", null, null)
+                .setAuthor(":: Lang Command ::", null, null)
                 .setColor(Color.PINK)
                 .setDescription(
-                        "**Description:** Plays music. \n" +
-                        "**Usage:** play [NAME/URL]    \n" +
+                        "**Description:** Changes language for server. \n" +
+                        "**Usage:** lang [LANG/LOCAL]    \n" +
                         "**Aliases:** " + getAliases().toString())
                 .build();
     }
-
-    private static final String YOUTUBE_BASE = "https://www.youtube.com/watch?v=";
 
     @Override
     public void execute(Message message, String[] args, TextChannel textChannel, Member member) {
@@ -55,21 +52,20 @@ public class PlayCommand extends AbstractCommand {
             textChannel.sendMessage(getUsage()).queue();
             return;
         }
-
         GuildInfo guildInfo = GuildManager.getOrCreate(textChannel.getGuild().getIdLong());
-        if (!member.getVoiceState().inVoiceChannel()) {
-            textChannel.sendMessage(Messages.YOU_HAVE_TO_BE_IN_VOICE_CHANNEL.get(guildInfo.getLang())).queue();
+
+        Lang lang = Arrays.stream(Lang.values()).filter(e -> e.name().equalsIgnoreCase(args[0])).findAny().orElse(null);
+
+        if (lang == null) {
+            lang = Arrays.stream(Lang.values()).filter(e -> e.getLocale().equalsIgnoreCase(args[0])).findAny().orElse(null);
+        }
+
+        if (lang == null) {
+            textChannel.sendMessage(Messages.LANGUAGE_NOT_FOUND.get(guildInfo.getLang())).queue();
             return;
         }
 
-        String track = String.join(" ", args);
-
-        if (track.startsWith("http") || track.startsWith("www")) {
-            PlayerManager.loadAndPlay(textChannel, track, member, false);
-            return;
-        }
-
-        String link = YOUTUBE_BASE + FancyBot.getYouTubeClient().getFirstID(track);
-        PlayerManager.loadAndPlay(textChannel, link, member, false);
+        guildInfo.setLang(lang);
+        textChannel.sendMessage(Messages.LANGUAGE_CHANGED.get(guildInfo.getLang()).replace("{LANGUAGE}", lang.name())).queue();
     }
 }

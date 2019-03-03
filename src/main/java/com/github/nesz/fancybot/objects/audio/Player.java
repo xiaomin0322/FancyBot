@@ -100,6 +100,9 @@ public class Player extends AudioEventAdapter {
                 .setColor(Color.BLACK);
 
         if (queue.isEmpty()) {
+            if (audioPlayer.getPlayingTrack() != null) {
+                audioPlayer.stopTrack();
+            }
             return;
         }
 

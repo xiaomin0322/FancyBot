@@ -32,7 +32,7 @@ public class ConfigLoader {
     public void override() {
         try {
             ClassLoader classLoader = ClassLoader.getSystemClassLoader();
-            String path = classLoader.getResource(file + ".json").getPath();
+            String path = classLoader.getResource(file).getPath();
             String json = "";
 
             try (BufferedReader br = Files.newBufferedReader(Paths.get(path))) {

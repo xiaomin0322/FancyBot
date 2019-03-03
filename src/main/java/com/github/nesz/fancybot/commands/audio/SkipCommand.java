@@ -1,7 +1,7 @@
 package com.github.nesz.fancybot.commands.audio;
 
-import com.github.nesz.fancybot.FancyBot;
 import com.github.nesz.fancybot.commands.AbstractCommand;
+import com.github.nesz.fancybot.objects.audio.Player;
 import com.github.nesz.fancybot.objects.audio.PlayerManager;
 import com.github.nesz.fancybot.objects.guild.GuildInfo;
 import com.github.nesz.fancybot.objects.guild.GuildManager;
@@ -14,62 +14,52 @@ import net.dv8tion.jda.core.entities.MessageEmbed;
 import net.dv8tion.jda.core.entities.TextChannel;
 
 import java.awt.*;
-import java.util.Arrays;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.Set;
 
-public class PlayCommand extends AbstractCommand {
+public class SkipCommand extends AbstractCommand {
 
     @Override
     public String getCommand() {
-        return "play";
+        return "skip";
     }
 
     @Override
     public Set<String> getAliases() {
-        return new HashSet<>(Arrays.asList("pla", "start"));
+        return Collections.emptySet();
     }
 
     @Override
     public Set<Permission> getRequiredPermissions() {
-        return new HashSet<>(Arrays.asList(Permission.MESSAGE_EMBED_LINKS));
+        return Collections.emptySet();
     }
 
     @Override
     public MessageEmbed getUsage() {
         return new EmbedBuilder()
-                .setAuthor(":: Play Command ::", null, null)
+                .setAuthor(":: Skip Command ::", null, null)
                 .setColor(Color.PINK)
                 .setDescription(
-                        "**Description:** Plays music. \n" +
-                        "**Usage:** play [NAME/URL]    \n" +
+                        "**Description:** Skips current song. \n" +
+                        "**Usage:** skip \n" +
                         "**Aliases:** " + getAliases().toString())
                 .build();
     }
 
-    private static final String YOUTUBE_BASE = "https://www.youtube.com/watch?v=";
-
     @Override
     public void execute(Message message, String[] args, TextChannel textChannel, Member member) {
-        if (args.length < 1) {
-            textChannel.sendMessage(getUsage()).queue();
-            return;
-        }
-
         GuildInfo guildInfo = GuildManager.getOrCreate(textChannel.getGuild().getIdLong());
-        if (!member.getVoiceState().inVoiceChannel()) {
-            textChannel.sendMessage(Messages.YOU_HAVE_TO_BE_IN_VOICE_CHANNEL.get(guildInfo.getLang())).queue();
+        if (!PlayerManager.isPlaying(textChannel)) {
+            textChannel.sendMessage(Messages.MUSIC_NOT_PLAYING.get(guildInfo.getLang())).queue();
             return;
         }
 
-        String track = String.join(" ", args);
-
-        if (track.startsWith("http") || track.startsWith("www")) {
-            PlayerManager.loadAndPlay(textChannel, track, member, false);
+        Player player = PlayerManager.getExisting(textChannel);
+        if (!member.getVoiceState().inVoiceChannel() || member.getVoiceState().getChannel() != player.getVoiceChannel()) {
+            textChannel.sendMessage(Messages.YOU_HAVE_TO_BE_IN_MY_VOICE_CHANNEL.get(guildInfo.getLang())).queue();
             return;
         }
 
-        String link = YOUTUBE_BASE + FancyBot.getYouTubeClient().getFirstID(track);
-        PlayerManager.loadAndPlay(textChannel, link, member, false);
+        player.nextTrack();
     }
 }

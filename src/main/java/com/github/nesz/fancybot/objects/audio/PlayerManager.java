@@ -42,13 +42,13 @@ public class PlayerManager {
     }
 
     public static void stop(TextChannel textChannel) {
-        Player player = get(textChannel);
+        Player player = getExisting(textChannel);
         player.getAudioPlayer().destroy();
         player.getGuild().getAudioManager().closeAudioConnection();
         PLAYERS.remove(textChannel.getGuild().getIdLong());
     }
 
-    public static Player get(TextChannel textChannel) {
+    public static Player getExisting(TextChannel textChannel) {
         return PLAYERS.get(textChannel.getGuild().getIdLong());
     }
 

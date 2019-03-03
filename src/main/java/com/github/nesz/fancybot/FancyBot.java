@@ -2,6 +2,7 @@ package com.github.nesz.fancybot;
 
 import com.github.nesz.fancybot.config.Config;
 import com.github.nesz.fancybot.config.loader.ConfigLoader;
+import com.github.nesz.fancybot.http.GeniusClient;
 import com.github.nesz.fancybot.http.HTTPClient;
 import com.github.nesz.fancybot.http.YouTubeClient;
 import com.github.nesz.fancybot.listeners.GuildMessageReceivedListener;
@@ -19,11 +20,13 @@ public class FancyBot extends HTTPClient {
     public static final Logger LOG = LogManager.getLogger("FancyBot");
 
     private static YouTubeClient youTubeClient;
+    private static GeniusClient geniusClient;
     private static ShardManager shardManager;
 
     public static void main(String[] args) {
         new ConfigLoader(Config.class, "config.json").override();
         youTubeClient = new YouTubeClient(Config.YOUTUBE_SECRET);
+        geniusClient = new GeniusClient(Config.GENIUS_SECRET);
 
 
         try {
@@ -50,5 +53,9 @@ public class FancyBot extends HTTPClient {
 
     public static YouTubeClient getYouTubeClient() {
         return youTubeClient;
+    }
+
+    public static GeniusClient getGeniusClient() {
+        return geniusClient;
     }
 }

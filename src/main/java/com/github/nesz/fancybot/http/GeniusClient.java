@@ -22,7 +22,7 @@ public class GeniusClient extends HTTPClient {
         this.token = token;
     }
 
-    public String search(String query) {
+    public JSONObject getTopSearch(String query) {
         Request request = new Request.Builder()
                 .url(API_URL + "/search?q=" + query)
                 .addHeader("Authorization", "Bearer " + token)
@@ -32,11 +32,11 @@ public class GeniusClient extends HTTPClient {
             if (response.body() == null) {
                 return null;
             }
-            JSONObject jsonResponse = new JSONObject(response.body().string());
+            JSONObject jsonResponse = new JSONObject(response.body().string()).getJSONObject("response");
             if (!jsonResponse.has("hits")) {
                 return null;
             }
-            return jsonResponse.getJSONArray("hits").getJSONObject(0).getJSONObject("result").getString("url");
+            return jsonResponse.getJSONArray("hits").getJSONObject(0).getJSONObject("result");
         } catch (IOException | JSONException e) {
             FancyBot.LOG.error("[GeniusClient] An error occurred while searching for lyrics!", e);
             return null;
