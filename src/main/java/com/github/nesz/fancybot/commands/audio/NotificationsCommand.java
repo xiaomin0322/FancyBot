@@ -1,7 +1,6 @@
 package com.github.nesz.fancybot.commands.audio;
 
 import com.github.nesz.fancybot.commands.AbstractCommand;
-import com.github.nesz.fancybot.objects.audio.Player;
 import com.github.nesz.fancybot.objects.audio.PlayerManager;
 import com.github.nesz.fancybot.objects.guild.GuildInfo;
 import com.github.nesz.fancybot.objects.guild.GuildManager;
@@ -18,16 +17,16 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-public class PreviousCommand extends AbstractCommand {
+public class NotificationsCommand extends AbstractCommand {
 
     @Override
     public String getCommand() {
-        return "previous";
+        return "notifications";
     }
 
     @Override
     public Set<String> getAliases() {
-        return new HashSet<>(Collections.singletonList("prev"));
+        return new HashSet<>(Collections.singletonList("notify"));
     }
 
     @Override
@@ -38,34 +37,33 @@ public class PreviousCommand extends AbstractCommand {
     @Override
     public MessageEmbed getUsage() {
         return new EmbedBuilder()
-                .setAuthor(":: Previous Command ::", null, null)
+                .setAuthor(":: Notifications Command ::", null, null)
                 .setColor(Color.PINK)
                 .setDescription(
-                        "**Description:** plays previous track \n" +
-                        "**Usage:** previous \n" +
+                        "**Description:** Turn on/off notifications. \n" +
+                        "**Usage:** notifications [ON/OFF] \n" +
                         "**Aliases:** " + getAliases().toString())
                 .build();
     }
 
     @Override
     public void execute(Message message, String[] args, TextChannel textChannel, Member member) {
+        if (args.length != 1) {
+            textChannel.sendMessage(getUsage()).queue();
+            return;
+        }
+
         GuildInfo guildInfo = GuildManager.getOrCreate(textChannel.getGuild().getIdLong());
-        if (!PlayerManager.isPlaying(textChannel)) {
-            textChannel.sendMessage(Messages.MUSIC_NOT_PLAYING.get(guildInfo.getLang())).queue();
-            return;
+        if (args[0].equals("off")) {
+            guildInfo.setNotifications(false);
+            textChannel.sendMessage(Messages.NOTIFICATIONS_TURNED_OFF.get(guildInfo.getLang())).queue();
         }
-
-        Player player = PlayerManager.getExisting(textChannel);
-        if (!member.getVoiceState().inVoiceChannel() || member.getVoiceState().getChannel() != player.getVoiceChannel()) {
-            textChannel.sendMessage(Messages.YOU_HAVE_TO_BE_IN_MY_VOICE_CHANNEL.get(guildInfo.getLang())).queue();
-            return;
+        else if (args[0].equals("on")) {
+            guildInfo.setNotifications(true);
+            textChannel.sendMessage(Messages.NOTIFICATIONS_TURNED_ON.get(guildInfo.getLang())).queue();
         }
-
-        if (player.getPrevious() == null) {
-            textChannel.sendMessage(Messages.QUEUE_THERE_IS_NO_PREVIOUS_SONG.get(guildInfo.getLang())).queue();
-            return;
+        if (PlayerManager.isPlaying(textChannel)) {
+            PlayerManager.getExisting(textChannel).setNotifications(guildInfo.notifications());
         }
-
-        player.previousTrack();
     }
 }

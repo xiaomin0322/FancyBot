@@ -3,7 +3,6 @@ package com.github.nesz.fancybot.objects.audio;
 import com.github.nesz.fancybot.objects.guild.GuildInfo;
 import com.github.nesz.fancybot.objects.guild.GuildManager;
 import com.github.nesz.fancybot.objects.translation.Messages;
-import com.google.common.collect.EvictingQueue;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.player.event.AudioEventAdapter;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
@@ -15,14 +14,13 @@ import net.dv8tion.jda.core.entities.TextChannel;
 import net.dv8tion.jda.core.entities.VoiceChannel;
 
 import java.awt.*;
-import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 public class Player extends AudioEventAdapter {
 
     private final LinkedBlockingQueue<AudioTrack> queue;
-    private final Queue<AudioTrack> previous;
+    private AudioTrack previous;
     private final TextChannel triggerChannel;
     private final VoiceChannel voiceChannel;
     private final AudioPlayer audioPlayer;
@@ -32,16 +30,17 @@ public class Player extends AudioEventAdapter {
     private int volume;
 
     public Player(AudioPlayer audioPlayer, TextChannel triggerChannel, VoiceChannel voiceChannel) {
+        GuildInfo guildInfo = GuildManager.getOrCreate(triggerChannel.getGuild().getIdLong());
         this.audioPlayer = audioPlayer;
         this.audioPlayer.addListener(this);
         this.audioHandler = new AudioHandler(audioPlayer);
         this.triggerChannel = triggerChannel;
         this.voiceChannel   = voiceChannel;
         this.queue = new LinkedBlockingQueue<>();
-        this.previous = EvictingQueue.create(10);
-        this.notifications = true;
+        this.previous = null;
+        this.notifications = guildInfo.notifications();
         this.repeatMode = RepeatMode.NONE;
-        this.volume = 100;
+        this.volume = guildInfo.getVolume();
         getGuild().getAudioManager().setSendingHandler(audioHandler);
     }
 
@@ -49,7 +48,7 @@ public class Player extends AudioEventAdapter {
         return queue;
     }
 
-    public Queue<AudioTrack> getPrevious() {
+    public AudioTrack getPrevious() {
         return previous;
     }
 
@@ -119,7 +118,7 @@ public class Player extends AudioEventAdapter {
     }
 
     public void previousTrack() {
-        audioPlayer.startTrack(previous.poll(), false);
+        audioPlayer.startTrack(previous, false);
         messageNotify();
     }
 
@@ -142,7 +141,7 @@ public class Player extends AudioEventAdapter {
             return;
         }
 
-        previous.offer(track.makeClone());
+        previous = track.makeClone();
         switch (repeatMode) {
             case NONE:
                 nextTrack();

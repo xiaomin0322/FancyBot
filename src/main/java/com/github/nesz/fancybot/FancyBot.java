@@ -6,6 +6,7 @@ import com.github.nesz.fancybot.http.GeniusClient;
 import com.github.nesz.fancybot.http.HTTPClient;
 import com.github.nesz.fancybot.http.YouTubeClient;
 import com.github.nesz.fancybot.listeners.GuildMessageReceivedListener;
+import com.github.nesz.fancybot.listeners.ReactionListener;
 import net.dv8tion.jda.bot.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.bot.sharding.ShardManager;
 import net.dv8tion.jda.core.OnlineStatus;
@@ -36,7 +37,8 @@ public class FancyBot extends HTTPClient {
                     .setGame(Game.watching("?"))
                     .setStatus(OnlineStatus.DO_NOT_DISTURB)
                     .addEventListeners(
-                            new GuildMessageReceivedListener()
+                            new GuildMessageReceivedListener(),
+                            new ReactionListener()
                     ).build();
         }
         catch (LoginException e) {
@@ -56,5 +58,13 @@ public class FancyBot extends HTTPClient {
 
     public static GeniusClient getGeniusClient() {
         return geniusClient;
+    }
+
+    public static String getVersion() {
+        String version = FancyBot.class.getPackage().getImplementationVersion();
+        if (version == null) {
+            version = "development";
+        }
+        return version;
     }
 }

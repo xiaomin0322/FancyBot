@@ -6,10 +6,12 @@ public class GuildInfo {
 
     private Lang lang;
     private int volume;
+    private boolean notifications;
 
-    public GuildInfo(Lang lang, int volume) {
+    public GuildInfo(Lang lang, int volume, boolean notifications) {
         this.lang = lang;
         this.volume = volume;
+        this.notifications = notifications;
     }
 
     public Lang getLang() {
@@ -26,5 +28,13 @@ public class GuildInfo {
 
     public void setVolume(int volume) {
         this.volume = volume;
+    }
+
+    public boolean notifications() {
+        return notifications;
+    }
+
+    public void setNotifications(boolean notifications) {
+        this.notifications = notifications;
     }
 }

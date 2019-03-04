@@ -16,8 +16,20 @@ public enum Messages {
     LANGUAGE_CHANGED("languageChanged"),
     LYRICS_NOT_FOUND("lyricsNotFound"),
     QUEUE_LIMIT_REACHED("queueLimitReached"),
-    QUEUE_THERE_IS_NO_PREVIOUS_SONG("queueThereIsNoPreviousSong");
-
+    QUEUE_THERE_IS_NO_PREVIOUS_SONG("queueThereIsNoPreviousSong"),
+    NOTIFICATIONS_TURNED_OFF("notificationsTurnedOff"),
+    NOTIFICATIONS_TURNED_ON("notificationsTurnedOn"),
+    QUEUE_FOR_SERVER("queueForServer"),
+    QUEUE_EMPTY("queueEmpty"),
+    QUEUE_TIME("queueTime"),
+    QUEUE_SIZE("queueSize"),
+    VOLUME("volume"),
+    PAUSE("pause"),
+    REPEAT("repeat"),
+    PLAYING_IN("playingIn"),
+    NO_CHANNEL("noChannel"),
+    SONGS("songs"),
+    INVOKED_BY("invokedBy");
 
 
     private String key;

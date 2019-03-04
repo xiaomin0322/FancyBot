@@ -80,7 +80,7 @@ public class RewindCommand extends AbstractCommand {
         long position = track.getPosition();
         long rewinded = position - ff;
         if (rewinded <= 0) {
-            if (player.getPrevious().isEmpty()) {
+            if (player.getPrevious() == null) {
                 track.setPosition(0);
                 return;
             }
