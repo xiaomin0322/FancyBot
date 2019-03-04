@@ -29,7 +29,13 @@ public enum Messages {
     PLAYING_IN("playingIn"),
     NO_CHANNEL("noChannel"),
     SONGS("songs"),
-    INVOKED_BY("invokedBy");
+    INVOKED_BY("invokedBy"),
+    SHUFFLING_QUEUE("shufflingQueue"),
+    SHUFFLED_QUEUE("shuffledQueue"),
+    CHANGED_REPEAT_MODE("changedRepeatMode"),
+    INVALID_REPEAT_MODE("invalidRepeatMode"),
+    TRACK_WITH_ID_DOES_NOT_EXISTS("trackWithIdDoesNotExists"),
+    TRACK_REMOVED_FROM_QUEUE("trackRemovedFromQueue");
 
 
     private String key;

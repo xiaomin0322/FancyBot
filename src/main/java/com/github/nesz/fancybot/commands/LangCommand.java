@@ -52,7 +52,7 @@ public class LangCommand extends AbstractCommand {
             textChannel.sendMessage(getUsage()).queue();
             return;
         }
-        GuildInfo guildInfo = GuildManager.getOrCreate(textChannel.getGuild().getIdLong());
+        GuildInfo guildInfo = GuildManager.getOrCreate(textChannel.getGuild());
 
         Lang lang = Arrays.stream(Lang.values()).filter(e -> e.name().equalsIgnoreCase(args[0])).findAny().orElse(null);
 

@@ -60,7 +60,7 @@ public class VolumeCommand extends AbstractCommand {
             return;
         }
 
-        GuildInfo guildInfo = GuildManager.getOrCreate(textChannel.getGuild().getIdLong());
+        GuildInfo guildInfo = GuildManager.getOrCreate(textChannel.getGuild());
         if (!PlayerManager.isPlaying(textChannel)) {
             textChannel.sendMessage(Messages.MUSIC_NOT_PLAYING.get(guildInfo.getLang())).queue();
             return;

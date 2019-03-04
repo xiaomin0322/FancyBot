@@ -6,6 +6,7 @@ import com.github.nesz.fancybot.objects.audio.PlayerManager;
 import com.github.nesz.fancybot.objects.guild.GuildManager;
 import com.github.nesz.fancybot.objects.translation.Lang;
 import com.github.nesz.fancybot.objects.translation.Messages;
+import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.Permission;
 import net.dv8tion.jda.core.entities.Member;
@@ -14,20 +15,21 @@ import net.dv8tion.jda.core.entities.MessageEmbed;
 import net.dv8tion.jda.core.entities.TextChannel;
 
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.LinkedBlockingQueue;
 
-public class PauseCommand extends AbstractCommand {
+public class ShuffleCommand extends AbstractCommand {
 
     @Override
     public String getCommand() {
-        return "pause";
+        return "shuffle";
     }
 
     @Override
     public Set<String> getAliases() {
-        return new HashSet<>(Collections.singletonList("break"));
+        return Collections.emptySet();
     }
 
     @Override
@@ -38,12 +40,12 @@ public class PauseCommand extends AbstractCommand {
     @Override
     public MessageEmbed getUsage() {
         return new EmbedBuilder()
-                .setAuthor(":: Pause Command ::", null, null)
+                .setAuthor(":: Shuffle Command ::", null, null)
                 .setColor(Color.PINK)
                 .setDescription(
-                        "**Description:** Pause music. \n" +
-                        "**Usage:** pause \n" +
-                        "**Aliases:** " + getAliases().toString())
+                    "**Description:** Shuffle queue. \n" +
+                    "**Usage:** shuffle \n" +
+                    "**Aliases:** " + getAliases().toString())
                 .build();
     }
 
@@ -61,10 +63,13 @@ public class PauseCommand extends AbstractCommand {
             return;
         }
 
-        if (player.getAudioPlayer().isPaused()) {
-            return;
-        }
-
-        player.getAudioPlayer().setPaused(true);
+        textChannel.sendMessage(Messages.SHUFFLING_QUEUE.get(lang)).queue(mes -> {
+            LinkedBlockingQueue<AudioTrack> queue = player.getQueue();
+            ArrayList<AudioTrack> queueTemp;
+            Collections.shuffle(queueTemp = new ArrayList<>(queue));
+            queue.clear();
+            queue.addAll(queueTemp);
+            mes.editMessage(Messages.SHUFFLED_QUEUE.get(lang)).queue();
+        });
     }
 }

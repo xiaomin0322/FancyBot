@@ -3,8 +3,8 @@ package com.github.nesz.fancybot.commands.audio;
 import com.github.nesz.fancybot.commands.AbstractCommand;
 import com.github.nesz.fancybot.objects.audio.Player;
 import com.github.nesz.fancybot.objects.audio.PlayerManager;
-import com.github.nesz.fancybot.objects.guild.GuildInfo;
 import com.github.nesz.fancybot.objects.guild.GuildManager;
+import com.github.nesz.fancybot.objects.translation.Lang;
 import com.github.nesz.fancybot.objects.translation.Messages;
 import com.github.nesz.fancybot.utils.StringUtils;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
@@ -57,20 +57,20 @@ public class FastForwardCommand extends AbstractCommand {
             return;
         }
 
-        GuildInfo guildInfo = GuildManager.getOrCreate(textChannel.getGuild().getIdLong());
+        Lang lang = GuildManager.getOrCreate(textChannel.getGuild()).getLang();
         if (!StringUtils.isNumeric(args[0])) {
             textChannel.sendMessage(getUsage()).queue();
             return;
         }
 
         if (!PlayerManager.isPlaying(textChannel)) {
-            textChannel.sendMessage(Messages.MUSIC_NOT_PLAYING.get(guildInfo.getLang())).queue();
+            textChannel.sendMessage(Messages.MUSIC_NOT_PLAYING.get(lang)).queue();
             return;
         }
 
         Player player = PlayerManager.getExisting(textChannel);
         if (!member.getVoiceState().inVoiceChannel() || member.getVoiceState().getChannel() != player.getVoiceChannel()) {
-            textChannel.sendMessage(Messages.YOU_HAVE_TO_BE_IN_MY_VOICE_CHANNEL.get(guildInfo.getLang())).queue();
+            textChannel.sendMessage(Messages.YOU_HAVE_TO_BE_IN_MY_VOICE_CHANNEL.get(lang)).queue();
             return;
         }
 

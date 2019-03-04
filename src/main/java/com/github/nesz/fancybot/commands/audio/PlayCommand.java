@@ -4,8 +4,8 @@ import com.github.nesz.fancybot.FancyBot;
 import com.github.nesz.fancybot.commands.AbstractCommand;
 import com.github.nesz.fancybot.objects.audio.Player;
 import com.github.nesz.fancybot.objects.audio.PlayerManager;
-import com.github.nesz.fancybot.objects.guild.GuildInfo;
 import com.github.nesz.fancybot.objects.guild.GuildManager;
+import com.github.nesz.fancybot.objects.translation.Lang;
 import com.github.nesz.fancybot.objects.translation.Messages;
 import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.Permission;
@@ -57,17 +57,17 @@ public class PlayCommand extends AbstractCommand {
             return;
         }
 
-        GuildInfo guildInfo = GuildManager.getOrCreate(textChannel.getGuild().getIdLong());
+        Lang lang = GuildManager.getOrCreate(textChannel.getGuild()).getLang();
         if (PlayerManager.isPlaying(textChannel)) {
             Player player = PlayerManager.getExisting(textChannel);
             if (player.getQueue().size() >= PlayerManager.MAX_QUEUE_SIZE) {
-                textChannel.sendMessage(Messages.QUEUE_LIMIT_REACHED.get(guildInfo.getLang())).queue();
+                textChannel.sendMessage(Messages.QUEUE_LIMIT_REACHED.get(lang)).queue();
                 return;
             }
         }
 
         if (!member.getVoiceState().inVoiceChannel()) {
-            textChannel.sendMessage(Messages.YOU_HAVE_TO_BE_IN_VOICE_CHANNEL.get(guildInfo.getLang())).queue();
+            textChannel.sendMessage(Messages.YOU_HAVE_TO_BE_IN_VOICE_CHANNEL.get(lang)).queue();
             return;
         }
 

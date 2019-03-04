@@ -4,8 +4,8 @@ import com.github.nesz.fancybot.FancyBot;
 import com.github.nesz.fancybot.commands.AbstractCommand;
 import com.github.nesz.fancybot.objects.audio.Player;
 import com.github.nesz.fancybot.objects.audio.PlayerManager;
-import com.github.nesz.fancybot.objects.guild.GuildInfo;
 import com.github.nesz.fancybot.objects.guild.GuildManager;
+import com.github.nesz.fancybot.objects.translation.Lang;
 import com.github.nesz.fancybot.objects.translation.Messages;
 import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.Permission;
@@ -54,15 +54,15 @@ public class LyricsCommand extends AbstractCommand {
             textChannel.sendMessage(lyricsEmbed(textChannel.getGuild(), mes)).queue();
         }
         else {
-            GuildInfo guildInfo = GuildManager.getOrCreate(textChannel.getGuild().getIdLong());
+            Lang lang = GuildManager.getOrCreate(textChannel.getGuild()).getLang();
             if (!PlayerManager.isPlaying(textChannel)) {
-                textChannel.sendMessage(Messages.MUSIC_NOT_PLAYING.get(guildInfo.getLang())).queue();
+                textChannel.sendMessage(Messages.MUSIC_NOT_PLAYING.get(lang)).queue();
                 return;
             }
 
             Player player = PlayerManager.getExisting(textChannel);
             if (!member.getVoiceState().inVoiceChannel() || member.getVoiceState().getChannel() != player.getVoiceChannel()) {
-                textChannel.sendMessage(Messages.YOU_HAVE_TO_BE_IN_MY_VOICE_CHANNEL.get(guildInfo.getLang())).queue();
+                textChannel.sendMessage(Messages.YOU_HAVE_TO_BE_IN_MY_VOICE_CHANNEL.get(lang)).queue();
                 return;
             }
 
@@ -75,15 +75,15 @@ public class LyricsCommand extends AbstractCommand {
         EmbedBuilder embed    = new EmbedBuilder().setColor(Color.ORANGE);
         JSONObject searchData = FancyBot.getGeniusClient().getTopSearch(query);
         if (searchData == null) {
-            GuildInfo guildInfo = GuildManager.getOrCreate(guild.getIdLong());
-            embed.setDescription(Messages.LYRICS_NOT_FOUND.get(guildInfo.getLang()));
+            Lang lang = GuildManager.getOrCreate(guild).getLang();
+            embed.setDescription(Messages.LYRICS_NOT_FOUND.get(lang));
             return embed.build();
         }
 
         String lyrics = FancyBot.getGeniusClient().getLyrics(searchData.getString("url"));
         if (lyrics == null) {
-            GuildInfo guildInfo = GuildManager.getOrCreate(guild.getIdLong());
-            embed.setDescription(Messages.LYRICS_NOT_FOUND.get(guildInfo.getLang()));
+            Lang lang = GuildManager.getOrCreate(guild).getLang();
+            embed.setDescription(Messages.LYRICS_NOT_FOUND.get(lang));
             return embed.build();
         }
 

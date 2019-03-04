@@ -4,7 +4,6 @@ import com.github.nesz.fancybot.FancyBot;
 import com.github.nesz.fancybot.commands.AbstractCommand;
 import com.github.nesz.fancybot.objects.audio.Player;
 import com.github.nesz.fancybot.objects.audio.PlayerManager;
-import com.github.nesz.fancybot.objects.guild.GuildInfo;
 import com.github.nesz.fancybot.objects.guild.GuildManager;
 import com.github.nesz.fancybot.objects.pagination.Page;
 import com.github.nesz.fancybot.objects.reactions.Emote;
@@ -73,10 +72,10 @@ public class QueueCommand extends AbstractCommand implements Interactive<Page> {
     }
 
     private MessageEmbed printEmpty(Guild guild) {
-        GuildInfo guildInfo = GuildManager.getOrCreate(guild.getIdLong());
+        Lang lang = GuildManager.getOrCreate(guild).getLang();
         EmbedBuilder eb = new EmbedBuilder();
-        eb.setAuthor(Messages.QUEUE_FOR_SERVER.get(guildInfo.getLang()).replace("{SERVER}", guild.getName()), null, guild.getIconUrl());
-        eb.setDescription(Messages.QUEUE_EMPTY.get(guildInfo.getLang()));
+        eb.setAuthor(Messages.QUEUE_FOR_SERVER.get(lang).replace("{SERVER}", guild.getName()), null, guild.getIconUrl());
+        eb.setDescription(Messages.QUEUE_EMPTY.get(lang));
         eb.setColor(Color.MAGENTA);
         return eb.build();
     }
@@ -91,7 +90,7 @@ public class QueueCommand extends AbstractCommand implements Interactive<Page> {
         }
 
 
-        Lang lang = GuildManager.getOrCreate(guild.getIdLong()).getLang();
+        Lang lang = GuildManager.getOrCreate(guild).getLang();
         AudioTrack currentTrack  = player.getAudioPlayer().getPlayingTrack();
         VoiceChannel voice       = guild.getSelfMember().getVoiceState().getChannel();
         List<AudioTrack> queue   = new ArrayList<>(player.getQueue());

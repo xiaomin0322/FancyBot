@@ -3,6 +3,7 @@ package com.github.nesz.fancybot.commands.audio;
 import com.github.nesz.fancybot.commands.AbstractCommand;
 import com.github.nesz.fancybot.objects.audio.Player;
 import com.github.nesz.fancybot.objects.audio.PlayerManager;
+import com.github.nesz.fancybot.objects.audio.RepeatMode;
 import com.github.nesz.fancybot.objects.guild.GuildManager;
 import com.github.nesz.fancybot.objects.translation.Lang;
 import com.github.nesz.fancybot.objects.translation.Messages;
@@ -14,20 +15,21 @@ import net.dv8tion.jda.core.entities.MessageEmbed;
 import net.dv8tion.jda.core.entities.TextChannel;
 
 import java.awt.*;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-public class PauseCommand extends AbstractCommand {
+public class RepeatCommand extends AbstractCommand {
 
     @Override
     public String getCommand() {
-        return "pause";
+        return "repeat";
     }
 
     @Override
     public Set<String> getAliases() {
-        return new HashSet<>(Collections.singletonList("break"));
+        return new HashSet<>(Collections.singletonList("loop"));
     }
 
     @Override
@@ -38,14 +40,15 @@ public class PauseCommand extends AbstractCommand {
     @Override
     public MessageEmbed getUsage() {
         return new EmbedBuilder()
-                .setAuthor(":: Pause Command ::", null, null)
+                .setAuthor(":: Repeat Command ::", null, null)
                 .setColor(Color.PINK)
                 .setDescription(
-                        "**Description:** Pause music. \n" +
-                        "**Usage:** pause \n" +
+                        "Description:** Repeats current track. \n" +
+                        "**Usage:** repeat \n" +
                         "**Aliases:** " + getAliases().toString())
                 .build();
     }
+
 
     @Override
     public void execute(Message message, String[] args, TextChannel textChannel, Member member) {
@@ -61,10 +64,29 @@ public class PauseCommand extends AbstractCommand {
             return;
         }
 
-        if (player.getAudioPlayer().isPaused()) {
-            return;
+        if (args.length < 1) {
+            switch (player.getRepeatMode()) {
+                case NONE:
+                    player.setRepeatMode(RepeatMode.TRACK);
+                    break;
+                case TRACK:
+                    player.setRepeatMode(RepeatMode.PLAYLIST);
+                    break;
+                case PLAYLIST:
+                    player.setRepeatMode(RepeatMode.NONE);
+                    break;
+            }
+            textChannel.sendMessage(Messages.CHANGED_REPEAT_MODE.get(lang).replace("{MODE}", player.getRepeatMode().name())).queue();
         }
+        else {
+            RepeatMode repeatMode = Arrays.stream(RepeatMode.values()).filter(e -> e.name().equalsIgnoreCase(args[0])).findAny().orElse(null);
+            if (repeatMode == null) {
+                textChannel.sendMessage(Messages.INVALID_REPEAT_MODE.get(lang)).queue();
+                return;
+            }
 
-        player.getAudioPlayer().setPaused(true);
+            player.setRepeatMode(repeatMode);
+                textChannel.sendMessage(Messages.CHANGED_REPEAT_MODE.get(lang).replace("{MODE}", player.getRepeatMode().name())).queue();
+        }
     }
 }

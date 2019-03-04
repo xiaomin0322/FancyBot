@@ -53,7 +53,7 @@ public class NotificationsCommand extends AbstractCommand {
             return;
         }
 
-        GuildInfo guildInfo = GuildManager.getOrCreate(textChannel.getGuild().getIdLong());
+        GuildInfo guildInfo = GuildManager.getOrCreate(textChannel.getGuild());
         if (args[0].equals("off")) {
             guildInfo.setNotifications(false);
             textChannel.sendMessage(Messages.NOTIFICATIONS_TURNED_OFF.get(guildInfo.getLang())).queue();
