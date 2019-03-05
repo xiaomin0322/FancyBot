@@ -2,6 +2,7 @@ package com.github.nesz.fancybot.commands.audio;
 
 import com.github.nesz.fancybot.FancyBot;
 import com.github.nesz.fancybot.commands.AbstractCommand;
+import com.github.nesz.fancybot.commands.CommandType;
 import com.github.nesz.fancybot.objects.audio.Player;
 import com.github.nesz.fancybot.objects.audio.PlayerManager;
 import com.github.nesz.fancybot.objects.guild.GuildManager;
@@ -21,38 +22,20 @@ import net.dv8tion.jda.core.Permission;
 import net.dv8tion.jda.core.entities.*;
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
-import java.util.*;
 
 public class QueueCommand extends AbstractCommand implements Interactive<Page> {
 
-    @Override
-    public String getCommand() {
-        return "queue";
-    }
-
-    @Override
-    public Set<String> getAliases() {
-        return new HashSet<>(Arrays.asList("que", "list"));
-    }
-
-    @Override
-    public Set<Permission> getRequiredPermissions() {
-        return new HashSet<>(Arrays.asList(
-                Permission.MESSAGE_EMBED_LINKS, Permission.MESSAGE_ADD_REACTION, Permission.MESSAGE_EXT_EMOJI
-        ));
-    }
-
-    @Override
-    public MessageEmbed getUsage() {
-        return new EmbedBuilder()
-                .setAuthor(":: Queue Command ::", null, null)
-                .setColor(Color.PINK)
-                .setDescription(
-                        "**Description:** Shows queue.. \n" +
-                        "**Usage:** queue \n" +
-                        "**Aliases:** " + getAliases().toString())
-                .build();
+    public QueueCommand() {
+        super("queue", new HashSet<>(Arrays.asList("que", "list")),
+                new HashSet<>(Arrays.asList(
+                        Permission.MESSAGE_EMBED_LINKS,
+                        Permission.MESSAGE_ADD_REACTION,
+                        Permission.MESSAGE_EXT_EMOJI
+        )), CommandType.MAIN);
     }
 
     @Override

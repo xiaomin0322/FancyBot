@@ -2,25 +2,25 @@ package com.github.nesz.fancybot.objects.audio;
 
 import com.github.nesz.fancybot.objects.guild.GuildInfo;
 import com.github.nesz.fancybot.objects.guild.GuildManager;
+import com.github.nesz.fancybot.objects.reactions.Emote;
 import com.github.nesz.fancybot.objects.translation.Messages;
+import com.github.nesz.fancybot.utils.StringUtils;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.player.event.AudioEventAdapter;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
-import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.TextChannel;
 import net.dv8tion.jda.core.entities.VoiceChannel;
 
-import java.awt.*;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 public class Player extends AudioEventAdapter {
 
     private final LinkedBlockingQueue<AudioTrack> queue;
-    private AudioTrack previous;
+    private final LinkedBlockingQueue<AudioTrack> previous;
     private final TextChannel triggerChannel;
     private final VoiceChannel voiceChannel;
     private final AudioPlayer audioPlayer;
@@ -30,14 +30,14 @@ public class Player extends AudioEventAdapter {
     private int volume;
 
     public Player(AudioPlayer audioPlayer, TextChannel triggerChannel, VoiceChannel voiceChannel) {
-        GuildInfo guildInfo = GuildManager.getOrCreate(triggerChannel.getGuild().getIdLong());
+        GuildInfo guildInfo = GuildManager.getOrCreate(triggerChannel.getGuild());
         this.audioPlayer = audioPlayer;
         this.audioPlayer.addListener(this);
         this.audioHandler = new AudioHandler(audioPlayer);
         this.triggerChannel = triggerChannel;
         this.voiceChannel   = voiceChannel;
         this.queue = new LinkedBlockingQueue<>();
-        this.previous = null;
+        this.previous = new LinkedBlockingQueue<>();
         this.notifications = guildInfo.notifications();
         this.repeatMode = RepeatMode.NONE;
         this.volume = guildInfo.getVolume();
@@ -48,7 +48,7 @@ public class Player extends AudioEventAdapter {
         return queue;
     }
 
-    public AudioTrack getPrevious() {
+    public LinkedBlockingQueue<AudioTrack> getPrevious() {
         return previous;
     }
 
@@ -107,18 +107,14 @@ public class Player extends AudioEventAdapter {
             return;
         }
         AudioTrackInfo info = audioPlayer.getPlayingTrack().getInfo();
-        GuildInfo guildInfo = GuildManager.getOrCreate(getGuild().getIdLong());
+        GuildInfo guildInfo = GuildManager.getOrCreate(getGuild());
         String translated = Messages.MUSIC_NOW_PLAYING.get(guildInfo.getLang());
-        EmbedBuilder eb = new EmbedBuilder()
-                .setColor(Color.BLACK)
-                .setDescription(translated + " [" + info.title + "](" + info.uri + ")");
-
-        triggerChannel.sendMessage(eb.build()).queue(message ->
-                message.delete().queueAfter(info.length, TimeUnit.MILLISECONDS));
+        triggerChannel.sendMessage(Emote.PLAY.asEmote() + " | " + translated + " `" + info.title + "`" + " `" + StringUtils.getDurationMinutes(info.length) + "`").queue(
+                        message -> message.delete().queueAfter(info.length, TimeUnit.MILLISECONDS));
     }
 
     public void previousTrack() {
-        audioPlayer.startTrack(previous, false);
+        audioPlayer.startTrack(previous.poll(), false);
         messageNotify();
     }
 
@@ -141,7 +137,7 @@ public class Player extends AudioEventAdapter {
             return;
         }
 
-        previous = track.makeClone();
+        previous.offer(track.makeClone());
         switch (repeatMode) {
             case NONE:
                 nextTrack();

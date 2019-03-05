@@ -1,8 +1,7 @@
-package com.github.nesz.fancybot.commands.audio;
+package com.github.nesz.fancybot.commands.audio.playlist.sub;
 
 import com.github.nesz.fancybot.commands.AbstractCommand;
 import com.github.nesz.fancybot.commands.CommandType;
-import com.github.nesz.fancybot.objects.audio.PlayerManager;
 import com.github.nesz.fancybot.objects.guild.GuildManager;
 import com.github.nesz.fancybot.objects.translation.Lang;
 import com.github.nesz.fancybot.objects.translation.Messages;
@@ -12,19 +11,19 @@ import net.dv8tion.jda.core.entities.TextChannel;
 
 import java.util.Collections;
 
-public class StopCommand extends AbstractCommand {
+public class PlaylistCreateCommand extends AbstractCommand {
 
-    public StopCommand() {
-        super("stop", Collections.emptySet(), Collections.emptySet(), CommandType.MAIN);
+    public PlaylistCreateCommand() {
+        super("create", Collections.emptySet(), Collections.emptySet(), CommandType.SUB);
     }
 
     @Override
     public void execute(Message message, String[] args, TextChannel textChannel, Member member) {
-        if (!PlayerManager.isPlaying(textChannel)) {
-            Lang lang = GuildManager.getOrCreate(textChannel.getGuild()).getLang();
-            textChannel.sendMessage(Messages.MUSIC_NOT_PLAYING.get(lang)).queue();
+        Lang lang = GuildManager.getOrCreate(textChannel.getGuild()).getLang();
+        if (args.length < 1) {
+            textChannel.sendMessage(Messages.COMMAND_PLAYLIST_USAGE.get(lang)).queue();
             return;
         }
-        PlayerManager.stop(textChannel);
+
     }
 }

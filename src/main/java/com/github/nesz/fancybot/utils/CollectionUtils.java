@@ -12,7 +12,7 @@ public class CollectionUtils {
         }
 
         fromIndex = Math.max(0, fromIndex);
-        toIndex = Math.min(size, toIndex);
+        toIndex   = Math.min(size, toIndex);
 
         return list.subList(fromIndex, toIndex);
     }

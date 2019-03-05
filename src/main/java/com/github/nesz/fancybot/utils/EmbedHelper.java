@@ -21,7 +21,7 @@ public class EmbedHelper {
 
     public static MessageEmbed.Footer getFooter(Member invoker) {
         User user = invoker.getUser();
-        String invoked = Messages.INVOKED_BY.get(GuildManager.getOrCreate(invoker.getGuild().getIdLong()).getLang());
+        String invoked = Messages.INVOKED_BY.get(GuildManager.getOrCreate(invoker.getGuild()).getLang());
         return new MessageEmbed.Footer(
                 invoked + " " + user.getName() + "#" + user.getDiscriminator() + " | FancyBot " + FancyBot.getVersion(),
                 user.getAvatarUrl(),

@@ -1,50 +1,23 @@
 package com.github.nesz.fancybot.commands.audio;
 
 import com.github.nesz.fancybot.commands.AbstractCommand;
+import com.github.nesz.fancybot.commands.CommandType;
 import com.github.nesz.fancybot.objects.audio.Player;
 import com.github.nesz.fancybot.objects.audio.PlayerManager;
 import com.github.nesz.fancybot.objects.guild.GuildManager;
 import com.github.nesz.fancybot.objects.translation.Lang;
 import com.github.nesz.fancybot.objects.translation.Messages;
-import net.dv8tion.jda.core.EmbedBuilder;
-import net.dv8tion.jda.core.Permission;
 import net.dv8tion.jda.core.entities.Member;
 import net.dv8tion.jda.core.entities.Message;
-import net.dv8tion.jda.core.entities.MessageEmbed;
 import net.dv8tion.jda.core.entities.TextChannel;
 
-import java.awt.*;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Set;
 
 public class PauseCommand extends AbstractCommand {
 
-    @Override
-    public String getCommand() {
-        return "pause";
-    }
-
-    @Override
-    public Set<String> getAliases() {
-        return new HashSet<>(Collections.singletonList("break"));
-    }
-
-    @Override
-    public Set<Permission> getRequiredPermissions() {
-        return Collections.emptySet();
-    }
-
-    @Override
-    public MessageEmbed getUsage() {
-        return new EmbedBuilder()
-                .setAuthor(":: Pause Command ::", null, null)
-                .setColor(Color.PINK)
-                .setDescription(
-                        "**Description:** Pause music. \n" +
-                        "**Usage:** pause \n" +
-                        "**Aliases:** " + getAliases().toString())
-                .build();
+    public PauseCommand() {
+        super("pause", new HashSet<>(Collections.singletonList("break")), Collections.emptySet(), CommandType.MAIN);
     }
 
     @Override

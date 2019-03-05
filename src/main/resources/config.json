@@ -9,5 +9,6 @@
   "YOUTUBE_SECRET": "",
   "GENIUS_SECRET": "",
   "SPOTIFY_CLIENT": "",
-  "SPOTIFY_SECRET": ""
+  "SPOTIFY_SECRET": "",
+  "IMGUR_TOKEN": ""
 }

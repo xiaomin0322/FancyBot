@@ -4,8 +4,10 @@ import com.github.nesz.fancybot.config.Config;
 import com.github.nesz.fancybot.config.loader.ConfigLoader;
 import com.github.nesz.fancybot.http.GeniusClient;
 import com.github.nesz.fancybot.http.HTTPClient;
+import com.github.nesz.fancybot.http.ImgurClient;
 import com.github.nesz.fancybot.http.YouTubeClient;
 import com.github.nesz.fancybot.listeners.GuildMessageReceivedListener;
+import com.github.nesz.fancybot.listeners.GuildVoiceListener;
 import com.github.nesz.fancybot.listeners.ReactionListener;
 import net.dv8tion.jda.bot.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.bot.sharding.ShardManager;
@@ -22,12 +24,14 @@ public class FancyBot extends HTTPClient {
 
     private static YouTubeClient youTubeClient;
     private static GeniusClient geniusClient;
+    private static ImgurClient imgurClient;
     private static ShardManager shardManager;
 
     public static void main(String[] args) {
         new ConfigLoader(Config.class, "config.json").override();
         youTubeClient = new YouTubeClient(Config.YOUTUBE_SECRET);
         geniusClient = new GeniusClient(Config.GENIUS_SECRET);
+        imgurClient = new ImgurClient(Config.IMGUR_TOKEN);
 
         try {
             shardManager = new DefaultShardManagerBuilder()
@@ -38,6 +42,7 @@ public class FancyBot extends HTTPClient {
                     .setStatus(OnlineStatus.DO_NOT_DISTURB)
                     .addEventListeners(
                             new GuildMessageReceivedListener(),
+                            new GuildVoiceListener(),
                             new ReactionListener()
                     ).build();
         }
@@ -58,6 +63,10 @@ public class FancyBot extends HTTPClient {
 
     public static GeniusClient getGeniusClient() {
         return geniusClient;
+    }
+
+    public static ImgurClient getImgurClient() {
+        return imgurClient;
     }
 
     public static String getVersion() {

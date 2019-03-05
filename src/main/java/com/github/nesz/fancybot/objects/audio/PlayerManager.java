@@ -3,6 +3,7 @@ package com.github.nesz.fancybot.objects.audio;
 import com.github.nesz.fancybot.FancyBot;
 import com.github.nesz.fancybot.objects.guild.GuildInfo;
 import com.github.nesz.fancybot.objects.guild.GuildManager;
+import com.github.nesz.fancybot.objects.reactions.Emote;
 import com.github.nesz.fancybot.objects.translation.Messages;
 import com.github.nesz.fancybot.utils.CollectionUtils;
 import com.sedmelluq.discord.lavaplayer.player.AudioConfiguration;
@@ -22,6 +23,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 public class PlayerManager {
 
@@ -56,6 +58,10 @@ public class PlayerManager {
         return PLAYERS.get(textChannel.getGuild().getIdLong());
     }
 
+    public static Player getExisting(Guild guild) {
+        return PLAYERS.get((guild.getIdLong()));
+    }
+
     public static Player getOrCreate(TextChannel textChannel, VoiceChannel voiceChannel) {
         return PLAYERS.computeIfAbsent(textChannel.getGuild().getIdLong(), guildId -> new Player(audioManager.createPlayer(), textChannel, voiceChannel));
     }
@@ -84,23 +90,16 @@ public class PlayerManager {
         }
         player.queue(track.makeClone());
         if (!playlist) {
-            GuildInfo guildInfo = GuildManager.getOrCreate(textChannel.getGuild().getIdLong());
-            String nowPlaying = Messages.MUSIC_NOW_PLAYING.get(guildInfo.getLang());
+            GuildInfo guildInfo = GuildManager.getOrCreate(textChannel.getGuild());
             String queued = Messages.MUSIC_QUEUED_SONG.get(guildInfo.getLang());
-            MessageEmbed eb = new EmbedBuilder()
-                    .setColor(Color.BLACK)
-                    .addField(player.getQueue().size() == 0 ?
-                            nowPlaying : queued,
-                            "[" + track.getInfo().title + "]" +
-                            "(" + track.getInfo().uri + ") [ " + user.getAsMention() + " ]", true)
-                    .build();
-            textChannel.sendMessage(eb).queue();
+            textChannel.sendMessage(Emote.PLAY.asEmote() + " | " + queued + " `" + track.getInfo().title + "`" + " [" + user.getAsMention() + "]").queue(
+                    message -> message.delete().queueAfter(track.getInfo().length, TimeUnit.MILLISECONDS));
         }
     }
 
     public static void loadAndPlay(TextChannel textChannel, String trackUrl, Member user, boolean isPlaylist) {
         Player player = getOrCreate(textChannel, user.getVoiceState().getChannel());
-        GuildInfo guildInfo = GuildManager.getOrCreate(textChannel.getGuild().getIdLong());
+        GuildInfo guildInfo = GuildManager.getOrCreate(textChannel.getGuild());
         audioManager.loadItemOrdered(audioManager, trackUrl, new AudioLoadResultHandler() {
 
             @Override

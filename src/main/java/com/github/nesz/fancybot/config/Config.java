@@ -5,6 +5,7 @@ public class Config {
     public static String BOT_TOKEN;
     public static String YOUTUBE_SECRET;
     public static String GENIUS_SECRET;
+    public static String IMGUR_TOKEN;
 
     public static String MYSQL_HOST;
     public static String MYSQL_PORT;

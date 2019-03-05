@@ -1,66 +1,39 @@
 package com.github.nesz.fancybot.commands.audio;
 
 import com.github.nesz.fancybot.commands.AbstractCommand;
+import com.github.nesz.fancybot.commands.CommandType;
 import com.github.nesz.fancybot.objects.audio.Player;
 import com.github.nesz.fancybot.objects.audio.PlayerManager;
 import com.github.nesz.fancybot.objects.guild.GuildInfo;
 import com.github.nesz.fancybot.objects.guild.GuildManager;
 import com.github.nesz.fancybot.objects.translation.Messages;
 import com.github.nesz.fancybot.utils.StringUtils;
-import net.dv8tion.jda.core.EmbedBuilder;
-import net.dv8tion.jda.core.Permission;
 import net.dv8tion.jda.core.entities.Member;
 import net.dv8tion.jda.core.entities.Message;
-import net.dv8tion.jda.core.entities.MessageEmbed;
 import net.dv8tion.jda.core.entities.TextChannel;
 
-import java.awt.*;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Set;
 
 public class VolumeCommand extends AbstractCommand {
 
-    @Override
-    public String getCommand() {
-        return "volume";
-    }
-
-    @Override
-    public Set<String> getAliases() {
-        return new HashSet<>(Collections.singletonList("vol"));
-    }
-
-    @Override
-    public Set<Permission> getRequiredPermissions() {
-        return Collections.emptySet();
-    }
-
-    @Override
-    public MessageEmbed getUsage() {
-        return new EmbedBuilder()
-                .setAuthor(":: Volume Command ::", null, null)
-                .setColor(Color.PINK)
-                .setDescription(
-                        "**Description:** Changes volume. \n" +
-                        "**Usage:** volume [VOLUME] \n" +
-                        "**Aliases:** " + getAliases().toString())
-                .build();
+    public VolumeCommand() {
+        super("volume", new HashSet<>(Collections.singletonList("vol")), Collections.emptySet(), CommandType.MAIN);
     }
 
     @Override
     public void execute(Message message, String[] args, TextChannel textChannel, Member member) {
+        GuildInfo guildInfo = GuildManager.getOrCreate(textChannel.getGuild());
         if (args.length < 1) {
-            textChannel.sendMessage(getUsage()).queue();
+            textChannel.sendMessage(Messages.COMMAND_VOLUME_USAGE.get(guildInfo.getLang())).queue();
             return;
         }
 
         if (!StringUtils.isNumeric(args[0])) {
-            textChannel.sendMessage(getUsage()).queue();
+            textChannel.sendMessage(Messages.COMMAND_VOLUME_USAGE.get(guildInfo.getLang())).queue();
             return;
         }
 
-        GuildInfo guildInfo = GuildManager.getOrCreate(textChannel.getGuild());
         if (!PlayerManager.isPlaying(textChannel)) {
             textChannel.sendMessage(Messages.MUSIC_NOT_PLAYING.get(guildInfo.getLang())).queue();
             return;

@@ -3,7 +3,8 @@ package com.github.nesz.fancybot.objects.reactions;
 public enum Emote {
 
     PREV(":prev:", "551864551491239983"),
-    NEXT(":next:", "551864618247782451");
+    NEXT(":next:", "551864618247782451"),
+    PLAY(":play:", "552067440083730443");
 
     private final String name;
     private final String id;
@@ -21,8 +22,12 @@ public enum Emote {
         return id;
     }
 
-    public String getFullId() {
+    public String asSnowflake() {
         return name + id;
+    }
+
+    public String asEmote() {
+        return "<" + asSnowflake() + ">";
     }
 
 

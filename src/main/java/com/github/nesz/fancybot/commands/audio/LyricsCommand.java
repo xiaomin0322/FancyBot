@@ -2,56 +2,31 @@ package com.github.nesz.fancybot.commands.audio;
 
 import com.github.nesz.fancybot.FancyBot;
 import com.github.nesz.fancybot.commands.AbstractCommand;
+import com.github.nesz.fancybot.commands.CommandType;
 import com.github.nesz.fancybot.objects.audio.Player;
 import com.github.nesz.fancybot.objects.audio.PlayerManager;
 import com.github.nesz.fancybot.objects.guild.GuildManager;
 import com.github.nesz.fancybot.objects.translation.Lang;
 import com.github.nesz.fancybot.objects.translation.Messages;
+import com.github.nesz.fancybot.utils.EmbedHelper;
 import net.dv8tion.jda.core.EmbedBuilder;
-import net.dv8tion.jda.core.Permission;
 import net.dv8tion.jda.core.entities.*;
 import org.json.JSONObject;
 
 import java.awt.*;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 
 public class LyricsCommand extends AbstractCommand {
 
-    @Override
-    public String getCommand() {
-        return "lyrics";
+    public LyricsCommand() {
+        super("lyrics", Collections.emptySet(), Collections.emptySet(), CommandType.MAIN);
     }
-
-    @Override
-    public Set<String> getAliases() {
-        return Collections.emptySet();
-    }
-
-    @Override
-    public Set<Permission> getRequiredPermissions() {
-        return new HashSet<>(Collections.singletonList(Permission.MESSAGE_EMBED_LINKS));
-    }
-
-    @Override
-    public MessageEmbed getUsage() {
-        return new EmbedBuilder()
-                .setAuthor(":: Lyrics Command ::", null, null)
-                .setColor(Color.PINK)
-                .setDescription(
-                        "**Description:** Searches for lyrics. \n" +
-                        "**Usage:** lyrics [TITLE] \n" +
-                        "**Aliases:** " + getAliases().toString())
-                .build();
-    }
-
 
     @Override
     public void execute(Message message, String[] args, TextChannel textChannel, Member member) {
         if (args.length > 1) {
             String mes = String.join(" ", args);
-            textChannel.sendMessage(lyricsEmbed(textChannel.getGuild(), mes)).queue();
+            textChannel.sendMessage(lyricsEmbed(member, textChannel.getGuild(), mes)).queue();
         }
         else {
             Lang lang = GuildManager.getOrCreate(textChannel.getGuild()).getLang();
@@ -67,12 +42,12 @@ public class LyricsCommand extends AbstractCommand {
             }
 
             String title = normalize(player.getAudioPlayer().getPlayingTrack().getInfo().title);
-            textChannel.sendMessage(lyricsEmbed(textChannel.getGuild(), title)).queue();
+            textChannel.sendMessage(lyricsEmbed(member, textChannel.getGuild(), title)).queue();
         }
     }
 
-    private static MessageEmbed lyricsEmbed(Guild guild, String query) {
-        EmbedBuilder embed    = new EmbedBuilder().setColor(Color.ORANGE);
+    private static MessageEmbed lyricsEmbed(Member invoker, Guild guild, String query) {
+        EmbedBuilder embed    = EmbedHelper.basicEmbed(Color.ORANGE, invoker);
         JSONObject searchData = FancyBot.getGeniusClient().getTopSearch(query);
         if (searchData == null) {
             Lang lang = GuildManager.getOrCreate(guild).getLang();

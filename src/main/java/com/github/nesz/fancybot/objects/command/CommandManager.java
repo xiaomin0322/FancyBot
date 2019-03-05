@@ -2,6 +2,7 @@ package com.github.nesz.fancybot.objects.command;
 
 import com.github.nesz.fancybot.FancyBot;
 import com.github.nesz.fancybot.commands.AbstractCommand;
+import com.github.nesz.fancybot.commands.CommandType;
 import com.github.nesz.fancybot.objects.guild.GuildInfo;
 import com.github.nesz.fancybot.objects.guild.GuildManager;
 import com.github.nesz.fancybot.objects.translation.Messages;
@@ -48,6 +49,9 @@ public class CommandManager {
             Set<Class<? extends AbstractCommand>> classes = Reflections.getSubtypesOf("com.github.nesz.fancybot.commands", AbstractCommand.class);
             for (Class<? extends AbstractCommand> s : classes) {
                 AbstractCommand c = s.getConstructor().newInstance();
+                if (c.getCommandType() == CommandType.SUB) {
+                    continue;
+                }
                 if (!commands.containsKey(c.getCommand())) {
                     commands.put(c.getCommand(), c);
                 }
@@ -71,7 +75,7 @@ public class CommandManager {
 
         boolean hasPermissions = true;
         Set<String> missingPermissions = new HashSet<>();
-        for (Permission permission : command.getRequiredPermissions()) {
+        for (Permission permission : command.getPermissions()) {
             if (self.hasPermission(permission)) {
                 continue;
             }
@@ -80,7 +84,7 @@ public class CommandManager {
         }
 
         if (!hasPermissions) {
-            GuildInfo guildInfo = GuildManager.getOrCreate(channel.getIdLong());
+            GuildInfo guildInfo = GuildManager.getOrCreate(channel.getGuild());
             channel.sendMessage(Messages.NOT_ENOUGH_PERMISSIONS
                     .get(guildInfo.getLang())
                     .replace("{PERMISSIONS}", String.join(", ", missingPermissions)))
