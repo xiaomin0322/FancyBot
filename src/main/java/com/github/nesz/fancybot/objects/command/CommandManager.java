@@ -7,12 +7,11 @@ import com.github.nesz.fancybot.objects.guild.GuildInfo;
 import com.github.nesz.fancybot.objects.guild.GuildManager;
 import com.github.nesz.fancybot.objects.translation.Messages;
 import com.github.nesz.fancybot.utils.Reflections;
-import net.dv8tion.jda.core.Permission;
-import net.dv8tion.jda.core.entities.Member;
-import net.dv8tion.jda.core.entities.Message;
-import net.dv8tion.jda.core.entities.TextChannel;
+import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.TextChannel;
 
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
@@ -23,6 +22,7 @@ public class CommandManager {
     private static final String PREFIX = ".";
 
     static {
+        System.out.println("triggered");
         loadCommands();
         loadAliases();
     }
@@ -57,7 +57,7 @@ public class CommandManager {
                 }
             }
         }
-        catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | IOException | ClassNotFoundException e) {
+        catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
             FancyBot.LOG.error("Error while loading commands", e);
         }
     }

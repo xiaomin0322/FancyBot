@@ -1,6 +1,6 @@
 package com.github.nesz.fancybot.objects.pagination;
 
-import net.dv8tion.jda.core.entities.TextChannel;
+import net.dv8tion.jda.api.entities.TextChannel;
 
 public class Page<E> {
 

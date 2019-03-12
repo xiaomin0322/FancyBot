@@ -1,9 +1,12 @@
 package com.github.nesz.fancybot.objects.translation;
 
 import com.github.nesz.fancybot.FancyBot;
+import com.github.nesz.fancybot.utils.FileUtils;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Properties;
 
@@ -30,15 +33,13 @@ public enum Lang {
 
     private static Map<String, String> fileToMap(String file) {
         Properties properties = new Properties();
-        String propFileName = "lang/" + file;
 
-        try (InputStream inputStream = Lang.class.getClassLoader().getResourceAsStream(propFileName)) {
-            if (inputStream != null) {
-                properties.load(inputStream);
-            }
-        }
-        catch (IOException e) {
-            FancyBot.LOG.error("Could not load property file", e);
+        String filePath = FileUtils.pathWithoutJar() + "/lang/" + file;
+
+        try (BufferedReader br = Files.newBufferedReader(Paths.get(filePath))) {
+            properties.load(br);
+        } catch (IOException e) {
+            FancyBot.LOG.debug("Could not load property file", e);
         }
 
         return (Map) properties;

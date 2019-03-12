@@ -1,15 +1,19 @@
 package com.github.nesz.fancybot.utils;
 
 import java.io.File;
-import java.io.IOException;
-import java.net.URL;
-import java.util.*;
+import java.io.FileInputStream;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.jar.JarEntry;
+import java.util.jar.JarInputStream;
 
 public class Reflections {
 
-    public static <T> Set<Class<? extends T>> getSubtypesOf(String packageName, Class<?> subtype) throws IOException, ClassNotFoundException {
+    public static <T> Set<Class<? extends T>> getSubtypesOf(String packageName, Class<?> subtype) {
         Set<Class<? extends T>> set = new HashSet<>();
-        for (Class clazz : getClasses(packageName)) {
+        for (Class clazz : getClassesInPackage(packageName)) {
             if (clazz.equals(subtype)) {
                 continue;
             }
@@ -20,37 +24,49 @@ public class Reflections {
         return set;
     }
 
-    private static Class[] getClasses(String packageName) throws ClassNotFoundException, IOException {
-        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        assert classLoader != null;
-        String path = packageName.replace('.', '/');
-        Enumeration<URL> resources = classLoader.getResources(path);
-        List<File> dirs = new ArrayList<>();
-        while (resources.hasMoreElements()) {
-            URL resource = resources.nextElement();
-            dirs.add(new File(resource.getFile()));
-        }
-        ArrayList<Class> classes = new ArrayList<>();
-        for (File directory : dirs) {
-            classes.addAll(findClasses(directory, packageName));
-        }
-        return classes.toArray(new Class[classes.size()]);
-    }
+    public static final List<Class<?>> getClassesInPackage(String packageName) {
+        String path = packageName.replaceAll("\\.", File.separator);
+        List<Class<?>> classes = new ArrayList<>();
+        String[] classPathEntries = System.getProperty("java.class.path").split(
+                System.getProperty("path.separator")
+        );
 
-    private static List<Class> findClasses(File directory, String packageName) throws ClassNotFoundException {
-        List<Class> classes = new ArrayList<>();
-        if (!directory.exists()) {
-            return classes;
-        }
-        File[] files = directory.listFiles();
-        for (File file : files) {
-            if (file.isDirectory()) {
-                assert !file.getName().contains(".");
-                classes.addAll(findClasses(file, packageName + "." + file.getName()));
-            } else if (file.getName().endsWith(".class")) {
-                classes.add(Class.forName(packageName + '.' + file.getName().substring(0, file.getName().length() - 6)));
+        String name;
+        for (String classpathEntry : classPathEntries) {
+            if (classpathEntry.endsWith(".jar")) {
+                File jar = new File(classpathEntry);
+                try {
+                    JarInputStream is = new JarInputStream(new FileInputStream(jar));
+                    JarEntry entry;
+                    while((entry = is.getNextJarEntry()) != null) {
+                        name = entry.getName();
+                        if (name.endsWith(".class")) {
+                            if (name.contains(path) && name.endsWith(".class")) {
+                                String classPath = name.substring(0, entry.getName().length() - 6);
+                                classPath = classPath.replaceAll("[\\|/]", ".");
+                                classes.add(Class.forName(classPath));
+                            }
+                        }
+                    }
+                } catch (Exception ex) {
+                    // Silence is gold
+                }
+            } else {
+                try {
+                    File base = new File(classpathEntry + File.separatorChar + path);
+                    for (File file : base.listFiles()) {
+                        name = file.getName();
+                        if (name.endsWith(".class")) {
+                            name = name.substring(0, name.length() - 6);
+                            classes.add(Class.forName(packageName + "." + name));
+                        }
+                    }
+                } catch (Exception ex) {
+                    // Silence is gold
+                }
             }
         }
+
         return classes;
     }
 }

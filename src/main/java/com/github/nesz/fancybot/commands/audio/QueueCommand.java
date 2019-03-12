@@ -1,6 +1,5 @@
 package com.github.nesz.fancybot.commands.audio;
 
-import com.github.nesz.fancybot.FancyBot;
 import com.github.nesz.fancybot.commands.AbstractCommand;
 import com.github.nesz.fancybot.commands.CommandType;
 import com.github.nesz.fancybot.objects.audio.Player;
@@ -8,7 +7,7 @@ import com.github.nesz.fancybot.objects.audio.PlayerManager;
 import com.github.nesz.fancybot.objects.guild.GuildManager;
 import com.github.nesz.fancybot.objects.pagination.Page;
 import com.github.nesz.fancybot.objects.reactions.Emote;
-import com.github.nesz.fancybot.objects.reactions.Interactive;
+import com.github.nesz.fancybot.objects.reactions.Interactable;
 import com.github.nesz.fancybot.objects.reactions.Reaction;
 import com.github.nesz.fancybot.objects.reactions.ReactionManager;
 import com.github.nesz.fancybot.objects.translation.Lang;
@@ -17,9 +16,10 @@ import com.github.nesz.fancybot.utils.EmbedHelper;
 import com.github.nesz.fancybot.utils.StringUtils;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
-import net.dv8tion.jda.core.EmbedBuilder;
-import net.dv8tion.jda.core.Permission;
-import net.dv8tion.jda.core.entities.*;
+import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.utils.MarkdownSanitizer;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -27,7 +27,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
-public class QueueCommand extends AbstractCommand implements Interactive<Page> {
+public class QueueCommand extends AbstractCommand implements Interactable<Page> {
 
     public QueueCommand() {
         super("queue", new HashSet<>(Arrays.asList("que", "list")),
@@ -63,7 +63,7 @@ public class QueueCommand extends AbstractCommand implements Interactive<Page> {
         return eb.build();
     }
 
-    private static final String PUNCTUATION_REGEX = "[.,/#!$%^&*;:{}=\\-_`~()\"\'\\]\\[]";
+   // private static final String PUNCTUATION_REGEX = "[.,/#!$%^&*;:{}=\\-_`~()\"\'\\]\\[]";
     private final static int ITEMS_PER_PAGE = 15;
 
     private MessageEmbed printQueue(TextChannel textChannel, MessageEmbed.Footer footer, Player player, int page) {
@@ -112,12 +112,11 @@ public class QueueCommand extends AbstractCommand implements Interactive<Page> {
         eb.addField(Messages.PAUSE.get(lang), "`" + player.getAudioPlayer().isPaused() + "`", true);
         eb.addField(Messages.REPEAT.get(lang), "`" + player.getRepeatMode().name() + "`", true);
         eb.addField(Messages.PLAYING_IN.get(lang), voice == null ? Messages.NO_CHANNEL.get(lang) : "`" + voice.getName() + "`", true);
-        FancyBot.LOG.debug(eb.build().getLength());
         return eb.build();
     }
 
     private String optimizeTitle(String title) {
-        return title.substring(0, Math.min(40, title.length())).replaceAll(PUNCTUATION_REGEX, "");
+        return MarkdownSanitizer.escape(title).substring(0, Math.min(40, title.length()))/*.replaceAll(PUNCTUATION_REGEX, "")*/;
     }
 
     @Override

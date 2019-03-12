@@ -1,11 +1,23 @@
 package com.github.nesz.fancybot.utils;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class StringUtils {
 
     public static boolean isNumeric(String str) {
         return str.matches("-?\\d+(\\.\\d+)?");
+    }
+
+    private static final Pattern UUID_PATTERN = Pattern.compile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$");
+    public static boolean isUUID(String check) {
+        if (check.length() != 36) {
+            return false;
+        }
+        return UUID_PATTERN.matcher(check).matches();
     }
 
     public static String getReadableTime(long millis) {
@@ -20,5 +32,24 @@ public class StringUtils {
                 TimeUnit.MILLISECONDS.toMinutes(length),
                 TimeUnit.MILLISECONDS.toSeconds(length) - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(length))
         );
+    }
+
+    private static final Pattern INPUT_PATTERN = Pattern.compile("[^\\s\"']+|\"([^\"]*)\"|'([^']*)'");
+    public static String[] inputWithQuotes(String input) {
+        List<String> matchList = new ArrayList<>();
+        Matcher regexMatcher = INPUT_PATTERN.matcher(input);
+        while (regexMatcher.find()) {
+            if (regexMatcher.group(1) != null) {
+                // Add double-quoted string without the quotes
+                matchList.add(regexMatcher.group(1));
+            } else if (regexMatcher.group(2) != null) {
+                // Add single-quoted string without the quotes
+                matchList.add(regexMatcher.group(2));
+            } else {
+                // Add unquoted word
+                matchList.add(regexMatcher.group());
+            }
+        }
+        return matchList.toArray(new String[matchList.size()]);
     }
 }

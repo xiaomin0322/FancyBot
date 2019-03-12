@@ -3,7 +3,7 @@ plugins {
 }
 
 group 'com.github.nesz.fancybot'
-version '0.0.4-SNAPSHOT'
+version '0.0.5-SNAPSHOT'
 
 sourceCompatibility = 1.8
 
@@ -13,10 +13,12 @@ repositories {
 }
 
 dependencies {
-    compile ('net.dv8tion:JDA:3.8.0_431') {
+    compile ('net.dv8tion:JDA:4.ALPHA.0_58') {
         exclude module: 'opus-java'
     }
-    compile group: 'com.zaxxer',               name: 'HikariCP',     version: '3.3.1'
+    compile group: 'mysql',                    name: 'mysql-connector-java', version: '8.0.15'
+    compile group: 'com.zaxxer',               name: 'HikariCP',             version: '3.3.1'
+    
     compile group: 'org.json',                 name: 'json',         version: '20180813'
 
     compile group: 'com.sedmelluq',            name: 'lavaplayer',   version: '1.3.11'
@@ -29,4 +31,18 @@ dependencies {
     compile group: 'org.apache.logging.log4j', name: 'log4j-api',    version: '2.11.2'
     compile group: 'org.apache.logging.log4j', name: 'log4j-core',   version: '2.11.2'
 
+}
+
+jar {
+    destinationDir project.file('/home/filip/Desktop')
+    archivesBaseName = "fb"
+    archiveName = "${baseName}.${extension}"
+    manifest {
+        attributes 'Main-Class': 'com.github.nesz.fancybot.FancyBot'
+    }
+    from {
+        configurations.compile.collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
+    }
 }

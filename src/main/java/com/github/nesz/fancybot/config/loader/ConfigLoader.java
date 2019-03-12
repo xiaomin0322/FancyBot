@@ -2,6 +2,7 @@ package com.github.nesz.fancybot.config.loader;
 
 import com.github.nesz.fancybot.FancyBot;
 import com.github.nesz.fancybot.config.Config;
+import com.github.nesz.fancybot.utils.FileUtils;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -31,8 +32,7 @@ public class ConfigLoader {
 
     public void override() {
         try {
-            ClassLoader classLoader = ClassLoader.getSystemClassLoader();
-            String path = classLoader.getResource(file).getPath();
+            String path = FileUtils.pathWithoutJar() + "/" + file;
             String json = "";
 
             try (BufferedReader br = Files.newBufferedReader(Paths.get(path))) {

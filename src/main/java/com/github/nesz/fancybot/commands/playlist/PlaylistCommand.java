@@ -1,14 +1,14 @@
-package com.github.nesz.fancybot.commands.audio.playlist;
+package com.github.nesz.fancybot.commands.playlist;
 
 import com.github.nesz.fancybot.commands.AbstractCommand;
 import com.github.nesz.fancybot.commands.CommandType;
-import com.github.nesz.fancybot.commands.audio.playlist.sub.PlaylistCreateCommand;
+import com.github.nesz.fancybot.commands.playlist.sub.*;
 import com.github.nesz.fancybot.objects.guild.GuildManager;
 import com.github.nesz.fancybot.objects.translation.Lang;
 import com.github.nesz.fancybot.objects.translation.Messages;
-import net.dv8tion.jda.core.entities.Member;
-import net.dv8tion.jda.core.entities.Message;
-import net.dv8tion.jda.core.entities.TextChannel;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.TextChannel;
 
 import java.util.*;
 
@@ -19,7 +19,11 @@ public class PlaylistCommand extends AbstractCommand {
     }
 
     private static final Set<AbstractCommand> SUB_COMMANDS = new HashSet<>(Arrays.asList(
-            new PlaylistCreateCommand()
+            new PlaylistCreateCommand(),
+            new PlaylistDeleteCommand(),
+            new PlaylistAddCommand(),
+            new PlaylistPlayCommand(),
+            new PlaylistListCommand()
     ));
 
     @Override

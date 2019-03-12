@@ -12,12 +12,9 @@ import java.util.function.Consumer;
 
 public class Database {
 
-    private static Database instance;
-
     private static HikariDataSource dataSource;
 
     public Database() {
-        instance   = this;
         dataSource = new HikariDataSource();
 
         String host = Config.MYSQL_HOST;
@@ -40,17 +37,7 @@ public class Database {
         dataSource.setMaximumPoolSize(5);
     }
 
-    public static Database getInstance() {
-        if (instance == null) {
-            return new Database();
-        }
-        return instance;
-    }
-
-    public static HikariDataSource getDataSource() {
-        if (instance == null) {
-            instance = new Database();
-        }
+    public HikariDataSource getDataSource() {
         return dataSource;
     }
 
@@ -80,7 +67,7 @@ public class Database {
         return 0;
     }
 
-    public static ResultSet executeQuery(PreparedStatement preparedStatement) {
+    public ResultSet executeQuery(PreparedStatement preparedStatement) {
         ResultSet resultSet = null;
         try {
             resultSet = preparedStatement.executeQuery();
@@ -101,7 +88,7 @@ public class Database {
         return resultSet;
     }
 
-    public static void executeUpdate(PreparedStatement preparedStatement) {
+    public void executeUpdate(PreparedStatement preparedStatement) {
         try {
             preparedStatement.executeUpdate();
         }

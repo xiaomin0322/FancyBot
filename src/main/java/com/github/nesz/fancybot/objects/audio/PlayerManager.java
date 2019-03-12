@@ -15,9 +15,9 @@ import com.sedmelluq.discord.lavaplayer.source.twitch.TwitchStreamAudioSourceMan
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
-import net.dv8tion.jda.core.EmbedBuilder;
-import net.dv8tion.jda.core.entities.*;
-import net.dv8tion.jda.core.managers.AudioManager;
+import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.managers.AudioManager;
 
 import java.awt.*;
 import java.util.List;
@@ -59,7 +59,7 @@ public class PlayerManager {
     }
 
     public static Player getExisting(Guild guild) {
-        return PLAYERS.get((guild.getIdLong()));
+        return PLAYERS.get(guild.getIdLong());
     }
 
     public static Player getOrCreate(TextChannel textChannel, VoiceChannel voiceChannel) {

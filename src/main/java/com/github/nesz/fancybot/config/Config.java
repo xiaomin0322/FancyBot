@@ -2,6 +2,8 @@ package com.github.nesz.fancybot.config;
 
 public class Config {
 
+    public static final int PLAYLIST_NAME_LENGTH = 32;
+
     public static String BOT_TOKEN;
     public static String YOUTUBE_SECRET;
     public static String GENIUS_SECRET;
