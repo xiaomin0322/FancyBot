@@ -142,6 +142,7 @@ public class Queries {
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
             preparedStatement.setString(1, String.valueOf(uuid));
             ResultSet rs = preparedStatement.executeQuery();
+            rs.next();
             return new Playlist(UUID.fromString(rs.getString("UUID")), rs.getString("NAME"), rs.getLong("OWNER"));
         }
         catch (SQLException e) {
@@ -151,7 +152,7 @@ public class Queries {
     }
 
     public static Playlist buildFullPlaylist(UUID uuid) {
-        String query = "SELECT VIDEO_ID, VIDEO_TITLE, VIDEO_UPLOADER, VIDEO_DURATION FROM tracks WHERE UUID = ?";
+        String query = "SELECT VIDEO_ID, VIDEO_TITLE, VIDEO_UPLOADER, VIDEO_DURATION FROM tracks WHERE PLAYLIST_UUID = ?";
         Playlist playlist = buildBasicPlaylist(uuid);
         if (playlist == null) {
             return null;
