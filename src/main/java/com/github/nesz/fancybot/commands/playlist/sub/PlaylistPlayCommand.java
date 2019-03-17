@@ -30,7 +30,7 @@ import java.util.function.Consumer;
 public class PlaylistPlayCommand extends AbstractCommand implements Choosable<List<Playlist>>, Interactable<Page> {
 
     public PlaylistPlayCommand() {
-        super("play", new HashSet<>(Arrays.asList("load")), Collections.emptySet(), CommandType.SUB);
+        super("play", Collections.singletonList("load"), Collections.emptyList(), CommandType.SUB);
     }
 
     @Override

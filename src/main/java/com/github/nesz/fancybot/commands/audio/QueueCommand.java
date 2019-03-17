@@ -13,29 +13,28 @@ import com.github.nesz.fancybot.objects.reactions.ReactionManager;
 import com.github.nesz.fancybot.objects.translation.Lang;
 import com.github.nesz.fancybot.objects.translation.Messages;
 import com.github.nesz.fancybot.utils.EmbedHelper;
+import com.github.nesz.fancybot.utils.MessagingHelper;
 import com.github.nesz.fancybot.utils.StringUtils;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
-import net.dv8tion.jda.api.utils.MarkdownSanitizer;
 
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 
 public class QueueCommand extends AbstractCommand implements Interactable<Page> {
 
     public QueueCommand() {
-        super("queue", new HashSet<>(Arrays.asList("que", "list")),
-                new HashSet<>(Arrays.asList(
+        super("queue", Arrays.asList("que", "list"),
+                Arrays.asList(
                         Permission.MESSAGE_EMBED_LINKS,
                         Permission.MESSAGE_ADD_REACTION,
                         Permission.MESSAGE_EXT_EMOJI
-        )), CommandType.MAIN);
+        ), CommandType.MAIN);
     }
 
     @Override
@@ -47,11 +46,12 @@ public class QueueCommand extends AbstractCommand implements Interactable<Page> 
 
         Player player = PlayerManager.getExisting(textChannel);
         int maxPage = (int) Math.ceil((double) player.getQueue().size() / (double) ITEMS_PER_PAGE);
-        textChannel.sendMessage(printQueue(textChannel, EmbedHelper.getFooter(member), player, 1)).queue(msg -> {
+        MessagingHelper.sendAsync(textChannel, printQueue(textChannel, EmbedHelper.getFooter(member), player, 1), m -> {
             if (maxPage > 1) {
-                ReactionManager.addListener(msg, getReactionListener(new Page<>(1, maxPage, textChannel)));
+                ReactionManager.addListener(m, getReactionListener(new Page<>(1, maxPage, textChannel)));
             }
         });
+
     }
 
     private MessageEmbed printEmpty(Guild guild) {
@@ -63,7 +63,7 @@ public class QueueCommand extends AbstractCommand implements Interactable<Page> 
         return eb.build();
     }
 
-   // private static final String PUNCTUATION_REGEX = "[.,/#!$%^&*;:{}=\\-_`~()\"\'\\]\\[]";
+    private static final String PUNCTUATION_REGEX = "[.,/#!$%^&*;:{}=\\-_`~()\"\'\\]\\[]";
     private final static int ITEMS_PER_PAGE = 15;
 
     private MessageEmbed printQueue(TextChannel textChannel, MessageEmbed.Footer footer, Player player, int page) {
@@ -116,7 +116,8 @@ public class QueueCommand extends AbstractCommand implements Interactable<Page> 
     }
 
     private String optimizeTitle(String title) {
-        return MarkdownSanitizer.escape(title).substring(0, Math.min(40, title.length()))/*.replaceAll(PUNCTUATION_REGEX, "")*/;
+
+        return title.substring(0, Math.min(40, title.length())).replaceAll(PUNCTUATION_REGEX, "");
     }
 
     @Override

@@ -44,7 +44,7 @@ public class PlayerManager {
     }
 
     public static boolean isAlone(VoiceChannel voiceChannel) {
-        return voiceChannel.getMembers().stream().anyMatch(m -> !m.getUser().isBot());
+        return voiceChannel.getMembers().stream().allMatch(m -> m.getUser().isBot());
     }
 
     public static void stop(TextChannel textChannel) {
@@ -80,7 +80,7 @@ public class PlayerManager {
 
     public static void play(Player player, AudioTrack track, Member user, TextChannel textChannel, boolean playlist) {
         AudioManager audioManager = textChannel.getGuild().getAudioManager();
-        if (!textChannel.getGuild().getAudioManager().isConnected()) {
+        if (!audioManager.isConnected()) {
             if (!audioManager.isConnected() && !audioManager.isAttemptingToConnect()) {
                 audioManager.openAudioConnection(user.getVoiceState().getChannel());
             }

@@ -8,31 +8,31 @@ import com.github.nesz.fancybot.objects.audio.RepeatMode;
 import com.github.nesz.fancybot.objects.guild.GuildManager;
 import com.github.nesz.fancybot.objects.translation.Lang;
 import com.github.nesz.fancybot.objects.translation.Messages;
+import com.github.nesz.fancybot.utils.MessagingHelper;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.TextChannel;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 
 public class RepeatCommand extends AbstractCommand {
 
     public RepeatCommand() {
-        super("repeat", new HashSet<>(Collections.singletonList("loop")), Collections.emptySet(), CommandType.MAIN);
+        super("repeat", Collections.singletonList("loop"), Collections.emptyList(), CommandType.MAIN);
     }
 
     @Override
     public void execute(Message message, String[] args, TextChannel textChannel, Member member) {
         Lang lang = GuildManager.getOrCreate(textChannel.getGuild()).getLang();
         if (!PlayerManager.isPlaying(textChannel)) {
-            textChannel.sendMessage(Messages.MUSIC_NOT_PLAYING.get(lang)).queue();
+            MessagingHelper.sendAsync(textChannel, Messages.MUSIC_NOT_PLAYING.get(lang));
             return;
         }
 
         Player player = PlayerManager.getExisting(textChannel);
         if (!member.getVoiceState().inVoiceChannel() || member.getVoiceState().getChannel() != player.getVoiceChannel()) {
-            textChannel.sendMessage(Messages.YOU_HAVE_TO_BE_IN_MY_VOICE_CHANNEL.get(lang)).queue();
+            MessagingHelper.sendAsync(textChannel, Messages.YOU_HAVE_TO_BE_IN_MY_VOICE_CHANNEL.get(lang));
             return;
         }
 
@@ -48,17 +48,18 @@ public class RepeatCommand extends AbstractCommand {
                     player.setRepeatMode(RepeatMode.NONE);
                     break;
             }
-            textChannel.sendMessage(Messages.CHANGED_REPEAT_MODE.get(lang).replace("{MODE}", player.getRepeatMode().name())).queue();
+            MessagingHelper.sendAsync(textChannel, Messages.CHANGED_REPEAT_MODE.get(lang).replace("{MODE}", player.getRepeatMode().name()));
+
         }
         else {
             RepeatMode repeatMode = Arrays.stream(RepeatMode.values()).filter(e -> e.name().equalsIgnoreCase(args[0])).findAny().orElse(null);
             if (repeatMode == null) {
-                textChannel.sendMessage(Messages.INVALID_REPEAT_MODE.get(lang)).queue();
+                MessagingHelper.sendAsync(textChannel, Messages.INVALID_REPEAT_MODE.get(lang));
                 return;
             }
 
             player.setRepeatMode(repeatMode);
-                textChannel.sendMessage(Messages.CHANGED_REPEAT_MODE.get(lang).replace("{MODE}", player.getRepeatMode().name())).queue();
+            MessagingHelper.sendAsync(textChannel, Messages.CHANGED_REPEAT_MODE.get(lang).replace("{MODE}", player.getRepeatMode().name()));
         }
     }
 }

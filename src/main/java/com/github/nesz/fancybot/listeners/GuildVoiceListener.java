@@ -22,6 +22,7 @@ public class GuildVoiceListener extends ListenerAdapter {
         if (!PlayerManager.isPlaying(event.getGuild())) {
             return;
         }
+
         if (PlayerManager.isAlone(event.getChannelLeft())) {
             PlayerManager.stop(PlayerManager.getExisting(event.getGuild()).getTriggerChannel());
         }

@@ -7,6 +7,7 @@ import com.github.nesz.fancybot.objects.audio.PlayerManager;
 import com.github.nesz.fancybot.objects.guild.GuildManager;
 import com.github.nesz.fancybot.objects.translation.Lang;
 import com.github.nesz.fancybot.objects.translation.Messages;
+import com.github.nesz.fancybot.utils.MessagingHelper;
 import com.github.nesz.fancybot.utils.StringUtils;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import net.dv8tion.jda.api.entities.Member;
@@ -19,37 +20,37 @@ import java.util.Collections;
 public class RemoveCommand extends AbstractCommand {
 
     public RemoveCommand() {
-        super("remove", Collections.emptySet(), Collections.emptySet(), CommandType.MAIN);
+        super("remove", Collections.emptyList(), Collections.emptyList(), CommandType.MAIN);
     }
 
     @Override
     public void execute(Message message, String[] args, TextChannel textChannel, Member member) {
         Lang lang = GuildManager.getOrCreate(textChannel.getGuild()).getLang();
         if (args.length < 1) {
-            textChannel.sendMessage(Messages.COMMAND_REMOVE_USAGE.get(lang)).queue();
+            MessagingHelper.sendAsync(textChannel, Messages.COMMAND_REMOVE_USAGE.get(lang));
             return;
         }
 
         if (!StringUtils.isNumeric(args[0])) {
-            textChannel.sendMessage(Messages.COMMAND_REMOVE_USAGE.get(lang)).queue();
+            MessagingHelper.sendAsync(textChannel, Messages.COMMAND_REMOVE_USAGE.get(lang));
             return;
         }
 
         if (!PlayerManager.isPlaying(textChannel)) {
-            textChannel.sendMessage(Messages.MUSIC_NOT_PLAYING.get(lang)).queue();
+            MessagingHelper.sendAsync(textChannel, Messages.MUSIC_NOT_PLAYING.get(lang));
             return;
         }
 
         Player player = PlayerManager.getExisting(textChannel);
         if (!member.getVoiceState().inVoiceChannel() || member.getVoiceState().getChannel() != player.getVoiceChannel()) {
-            textChannel.sendMessage(Messages.YOU_HAVE_TO_BE_IN_MY_VOICE_CHANNEL.get(lang)).queue();
+            MessagingHelper.sendAsync(textChannel, Messages.YOU_HAVE_TO_BE_IN_MY_VOICE_CHANNEL.get(lang));
             return;
         }
 
         ArrayList<AudioTrack> tracks = new ArrayList<>(player.getQueue());
         int remove = Integer.parseInt(args[0]);
         if (tracks.size() < remove) {
-            textChannel.sendMessage(Messages.TRACK_WITH_ID_DOES_NOT_EXISTS.get(lang)).queue();
+            MessagingHelper.sendAsync(textChannel, Messages.TRACK_WITH_ID_DOES_NOT_EXISTS.get(lang));
             return;
         }
 
@@ -60,6 +61,8 @@ public class RemoveCommand extends AbstractCommand {
             }
         }
 
-        textChannel.sendMessage(Messages.TRACK_REMOVED_FROM_QUEUE.get(lang).replace("{TITLE}", title).replace("{ID}", String.valueOf(remove))).queue();
+        String msg = Messages.TRACK_REMOVED_FROM_QUEUE.get(lang).replace("{TITLE}", title).replace("{ID}", String.valueOf(remove));
+        MessagingHelper.sendAsync(textChannel, msg);
+
     }
 }

@@ -1,9 +1,11 @@
 package com.github.nesz.fancybot.objects.audio;
 
+import com.github.nesz.fancybot.FancyBot;
 import com.github.nesz.fancybot.objects.guild.GuildInfo;
 import com.github.nesz.fancybot.objects.guild.GuildManager;
 import com.github.nesz.fancybot.objects.reactions.Emote;
 import com.github.nesz.fancybot.objects.translation.Messages;
+import com.github.nesz.fancybot.utils.MessagingHelper;
 import com.github.nesz.fancybot.utils.StringUtils;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.player.event.AudioEventAdapter;
@@ -14,41 +16,43 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.VoiceChannel;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class Player extends AudioEventAdapter {
 
-    private final LinkedBlockingQueue<AudioTrack> queue;
-    private final LinkedBlockingQueue<AudioTrack> previous;
+    private LinkedBlockingQueue<AudioTrack> queue;
+    private final List<AudioTrack> previous;
+    private final GuildInfo guildInfo;
     private final TextChannel triggerChannel;
     private final VoiceChannel voiceChannel;
     private final AudioPlayer audioPlayer;
     private final AudioHandler audioHandler;
     private boolean notifications;
     private RepeatMode repeatMode;
-    private int volume;
 
     public Player(AudioPlayer audioPlayer, TextChannel triggerChannel, VoiceChannel voiceChannel) {
-        GuildInfo guildInfo = GuildManager.getOrCreate(triggerChannel.getGuild());
+        this.guildInfo = GuildManager.getOrCreate(triggerChannel.getGuild());
         this.audioPlayer = audioPlayer;
         this.audioPlayer.addListener(this);
         this.audioHandler = new AudioHandler(audioPlayer);
         this.triggerChannel = triggerChannel;
         this.voiceChannel   = voiceChannel;
         this.queue = new LinkedBlockingQueue<>();
-        this.previous = new LinkedBlockingQueue<>();
+        this.previous = new ArrayList<>();
         this.notifications = guildInfo.notifications();
         this.repeatMode = RepeatMode.NONE;
-        this.volume = guildInfo.getVolume();
         getGuild().getAudioManager().setSendingHandler(audioHandler);
+        audioPlayer.setVolume(guildInfo.getVolume());
     }
 
     public LinkedBlockingQueue<AudioTrack> getQueue() {
         return queue;
     }
 
-    public LinkedBlockingQueue<AudioTrack> getPrevious() {
+    public List<AudioTrack> getPrevious() {
         return previous;
     }
 
@@ -80,14 +84,6 @@ public class Player extends AudioEventAdapter {
         this.notifications = notifications;
     }
 
-    public int getVolume() {
-        return volume;
-    }
-
-    public void setVolume(int volume) {
-        this.volume = volume;
-    }
-
     public AudioPlayer getAudioPlayer() {
         return audioPlayer;
     }
@@ -107,15 +103,41 @@ public class Player extends AudioEventAdapter {
             return;
         }
         AudioTrackInfo info = audioPlayer.getPlayingTrack().getInfo();
-        GuildInfo guildInfo = GuildManager.getOrCreate(getGuild());
         String translated = Messages.MUSIC_NOW_PLAYING.get(guildInfo.getLang());
-        triggerChannel.sendMessage(Emote.PLAY.asEmote() + " | " + translated + " `" + info.title + "`" + " `" + StringUtils.getDurationMinutes(info.length) + "`").queue(
-                        message -> message.delete().queueAfter(info.length, TimeUnit.MILLISECONDS));
+
+        MessagingHelper.sendAsync(triggerChannel, Emote.PLAY.asEmote() + " | " + translated + " `" + info.title + "`" + " `" + StringUtils.getDurationMinutes(info.length) + "`");
+    }
+
+    private AudioTrack getPreviousTrack() {
+        return previous.get(previous.size() - 1);
     }
 
     public void previousTrack() {
-        audioPlayer.startTrack(previous.poll(), false);
+        audioPlayer.startTrack(getPreviousTrack(), false);
+        previous.remove(getPreviousTrack());
         messageNotify();
+    }
+
+    public void skip(int howMany) {
+        if (queue.size() < howMany) {
+            if (audioPlayer.getPlayingTrack() != null) {
+                audioPlayer.stopTrack();
+            }
+            if (guildInfo.isAutoPlay()) {
+                AudioTrack previousTrack = getPreviousTrack();
+                if (previousTrack == null) {
+                    return;
+                }
+                AudioTrack related = FancyBot.getYouTubeClient().getRelatedVideo(previousTrack.getIdentifier());
+                queue.add(related);
+                audioPlayer.startTrack(queue.poll(), false);
+                messageNotify();
+            }
+            return;
+        }
+        queue = queue.stream().skip(howMany).collect(Collectors.toCollection(LinkedBlockingQueue::new));
+
+        nextTrack();
     }
 
     public void nextTrack() {
@@ -123,6 +145,23 @@ public class Player extends AudioEventAdapter {
         if (queue.isEmpty()) {
             if (audioPlayer.getPlayingTrack() != null) {
                 audioPlayer.stopTrack();
+            }
+            FancyBot.LOG.debug("EMPTY");
+            if (guildInfo.isAutoPlay()) {
+                FancyBot.LOG.debug("AUTOPLAY");
+                AudioTrack previousTrack = getPreviousTrack();
+                if (previousTrack == null) {
+                    return;
+                }
+                FancyBot.LOG.debug("previousTrack");
+                AudioTrack related = FancyBot.getYouTubeClient().getRelatedVideo(previousTrack.getIdentifier());
+                if (related == null) {
+                    FancyBot.LOG.debug("related == null");
+                    return;
+                }
+                queue.add(related);
+                audioPlayer.startTrack(queue.poll(), false);
+                messageNotify();
             }
             return;
         }
@@ -137,7 +176,7 @@ public class Player extends AudioEventAdapter {
             return;
         }
 
-        previous.offer(track.makeClone());
+        previous.add(track.makeClone());
         switch (repeatMode) {
             case NONE:
                 nextTrack();

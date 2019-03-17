@@ -66,7 +66,6 @@ public class FileUtils {
                     FancyBot.LOG.debug("Resource file `" + file + "` does not exists");
                     continue;
                 }
-                FancyBot.LOG.debug("CREATING " + file);
                 Files.copy(is, Paths.get(dirPath.toString() + "/" + file));
             }
 

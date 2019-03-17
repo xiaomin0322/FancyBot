@@ -15,7 +15,6 @@ public class GuildMessageReceivedListener extends ListenerAdapter {
     public void onGuildMessageReceived(GuildMessageReceivedEvent event) {
         String rawMessage = event.getMessage().getContentRaw();
         User author = event.getAuthor();
-        FancyBot.LOG.debug(rawMessage);
 
         if (rawMessage.isEmpty()) {
             return;
@@ -24,6 +23,8 @@ public class GuildMessageReceivedListener extends ListenerAdapter {
         if (author.isBot()) {
             return;
         }
+
+        FancyBot.LOG.debug(rawMessage);
 
         Consumer<GuildMessageReceivedEvent> consumer = ChoosableManager.getChoosables().getIfPresent(author.getIdLong());
         if (consumer != null) {

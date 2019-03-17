@@ -22,7 +22,6 @@ public class CommandManager {
     private static final String PREFIX = ".";
 
     static {
-        System.out.println("triggered");
         loadCommands();
         loadAliases();
     }

@@ -28,7 +28,11 @@ public enum Lang {
     }
 
     public static String translate(Lang lang, String key) {
-        return lang.translation.get(key);
+        String translated = lang.translation.get(key);
+        if (translated == null) {
+            return "Missing translation for key `" + key + "`";
+        }
+        return translated;
     }
 
     private static Map<String, String> fileToMap(String file) {

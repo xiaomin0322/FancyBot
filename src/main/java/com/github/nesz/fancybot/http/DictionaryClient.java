@@ -2,7 +2,6 @@ package com.github.nesz.fancybot.http;
 
 import com.github.nesz.fancybot.FancyBot;
 import com.github.nesz.fancybot.http.basic.HTTPClient;
-import com.github.nesz.fancybot.utils.RandomUtil;
 import okhttp3.HttpUrl;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -15,44 +14,46 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-public class ImgurClient extends HTTPClient {
+public class DictionaryClient extends HTTPClient {
 
-    private static final String HOST = "api.imgur.com";
-    private static final String PATH_REDDIT = "3/gallery/r/";
+    private static final String HOST = "api.urbandictionary.com";
+    private static final String PATH_DEFINITION = "v0/define";
 
-    private final String key;
+    public DictionaryClient() {
 
-    public ImgurClient(String key) {
-        this.key = key;
     }
 
-    public String randomRedditImage(String subreddit) {
+    public JSONArray getDefinitions(String query) {
         HttpUrl url = new HttpUrl.Builder()
                 .scheme(SCHEME_HTTPS)
                 .host(HOST)
-                .addPathSegments(PATH_REDDIT)
-                .addPathSegment(subreddit)
+                .addPathSegments(PATH_DEFINITION)
+                .addQueryParameter("term", query)
                 .build();
 
         Request request = new Request.Builder()
                 .url(url)
-                .addHeader("Authorization", "Client-ID " + key)
+                .get()
                 .build();
 
         try (Response response = asyncRequest(request).get(30, TimeUnit.SECONDS)) {
             if (response.body() == null) {
                 return null;
             }
-            JSONObject jsonObject = new JSONObject(response.body().string());
-            JSONArray jsonArray = jsonObject.getJSONArray("data");
-            if (jsonArray.isEmpty()) {
+            JSONObject jsonResponse = new JSONObject(response.body().string());
+            if (!jsonResponse.has("list")) {
                 return null;
             }
-            return jsonArray.getJSONObject(RandomUtil.getRandomIntBetween(0, jsonArray.length() - 1)).getString("link");
+            JSONArray definitions = jsonResponse.getJSONArray("list");
+            if (definitions.isEmpty()) {
+                return null;
+            }
+            return definitions;
         } catch (IOException | JSONException | InterruptedException | ExecutionException | TimeoutException e) {
-            FancyBot.LOG.error("[ImgurClient] An error occurred while getting image!", e);
+            FancyBot.LOG.error("[DictionaryClient] An error occurred while searching for definitions!", e);
             return null;
         }
     }
+
 
 }

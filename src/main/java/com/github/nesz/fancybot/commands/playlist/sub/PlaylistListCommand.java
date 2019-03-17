@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit;
 public class PlaylistListCommand extends AbstractCommand implements Interactable<Page> {
 
     public PlaylistListCommand() {
-        super("list", Collections.emptySet(), Collections.emptySet(), CommandType.SUB);
+        super("list", Collections.emptyList(), Collections.emptyList(), CommandType.SUB);
     }
 
     @Override

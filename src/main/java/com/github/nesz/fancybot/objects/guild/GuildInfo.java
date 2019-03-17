@@ -9,12 +9,16 @@ public class GuildInfo {
     private Lang lang;
     private int volume;
     private boolean notifications;
+    private String prefix;
+    private boolean autoPlay;
 
-    public GuildInfo(long guildId, Lang lang, int volume, boolean notifications) {
+    public GuildInfo(long guildId, Lang lang, int volume, boolean notifications, String prefix, boolean autoPlay) {
         this.guildId = guildId;
         this.lang = lang;
         this.volume = volume;
         this.notifications = notifications;
+        this.prefix = prefix;
+        this.autoPlay = autoPlay;
     }
 
     public void save() {
@@ -49,6 +53,24 @@ public class GuildInfo {
 
     public void setNotifications(boolean notifications) {
         this.notifications = notifications;
+        save();
+    }
+
+    public String getPrefix() {
+        return prefix;
+    }
+
+    public void setPrefix(String prefix) {
+        this.prefix = prefix;
+        save();
+    }
+
+    public boolean isAutoPlay() {
+        return autoPlay;
+    }
+
+    public void setAutoPlay(boolean autoPlay) {
+        this.autoPlay = autoPlay;
         save();
     }
 }

@@ -15,7 +15,7 @@ import java.util.*;
 public class PlaylistCommand extends AbstractCommand {
 
     public PlaylistCommand() {
-        super("playlist", new HashSet<>(Collections.singletonList("pl")), Collections.emptySet(), CommandType.MAIN);
+        super("playlist", Collections.singletonList("pl"), Collections.emptyList(), CommandType.MAIN);
     }
 
     private static final Set<AbstractCommand> SUB_COMMANDS = new HashSet<>(Arrays.asList(

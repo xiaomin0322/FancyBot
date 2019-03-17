@@ -25,6 +25,8 @@ public class Queries {
             "LANG VARCHAR(16) NOT NULL, " +
             "VOLUME INT NOT NULL," +
             "NOTIFY BOOLEAN NOT NULL, " +
+            "PREFIX VARCHAR(4) NOT NULL, " +
+            "AUTOPLAY BOOLEAN NOT NULL, " +
             "PRIMARY KEY (ID)) CHARACTER SET utf8mb4";
 
     public static final String CREATE_TABLE_DATA =
@@ -47,13 +49,15 @@ public class Queries {
             "PRIMARY KEY (ID)) CHARACTER SET utf8mb4";
 
     public static boolean insertGuild(GuildInfo info) {
-        String query = "INSERT INTO guildData VALUES(DEFAULT, ?, ?, ?, ?)";
+        String query = "INSERT INTO guildData VALUES(DEFAULT, ?, ?, ?, ?, ?, ?)";
         try (Connection connection = FancyBot.getDatabase().getDataSource().getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
             preparedStatement.setLong(1, info.getGuildId());
             preparedStatement.setString(2, info.getLang().name());
             preparedStatement.setInt(3, info.getVolume());
             preparedStatement.setBoolean(4, info.notifications());
+            preparedStatement.setString(5, info.getPrefix());
+            preparedStatement.setBoolean(5, info.isAutoPlay());
             preparedStatement.executeUpdate();
             return true;
         }
@@ -64,13 +68,15 @@ public class Queries {
     }
 
     public static boolean updateGuild(GuildInfo info) {
-        String query = "UPDATE guildData SET LANG = ?, VOLUME = ?, NOTIFY = ? WHERE GUILD = ?";
+        String query = "UPDATE guildData SET LANG = ?, VOLUME = ?, NOTIFY = ?, PREFIX = ?, AUTOPLAY = ? WHERE GUILD = ?";
         try (Connection connection = FancyBot.getDatabase().getDataSource().getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
             preparedStatement.setString(1, info.getLang().name());
             preparedStatement.setInt(2, info.getVolume());
             preparedStatement.setBoolean(3, info.notifications());
-            preparedStatement.setLong(4, info.getGuildId());
+            preparedStatement.setString(4, info.getPrefix());
+            preparedStatement.setBoolean(5, info.isAutoPlay());
+            preparedStatement.setLong(6, info.getGuildId());
             preparedStatement.executeUpdate();
             return true;
         }

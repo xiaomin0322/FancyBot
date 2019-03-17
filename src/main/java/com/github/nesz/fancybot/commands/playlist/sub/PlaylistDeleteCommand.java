@@ -29,7 +29,7 @@ import java.util.function.Consumer;
 public class PlaylistDeleteCommand extends AbstractCommand implements Choosable<List<Playlist>>, Interactable<Page> {
 
     public PlaylistDeleteCommand() {
-        super("delete", Collections.emptySet(), Collections.emptySet(), CommandType.SUB);
+        super("delete", Collections.emptyList(), Collections.emptyList(), CommandType.SUB);
     }
 
     @Override

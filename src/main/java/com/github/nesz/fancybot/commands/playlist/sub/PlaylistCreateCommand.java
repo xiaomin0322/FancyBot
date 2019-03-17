@@ -15,7 +15,7 @@ import java.util.Collections;
 public class PlaylistCreateCommand extends AbstractCommand {
 
     public PlaylistCreateCommand() {
-        super("create", Collections.emptySet(), Collections.emptySet(), CommandType.SUB);
+        super("create", Collections.emptyList(), Collections.emptyList(), CommandType.SUB);
     }
 
     @Override

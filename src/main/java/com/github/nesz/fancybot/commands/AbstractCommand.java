@@ -5,16 +5,16 @@ import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.TextChannel;
 
-import java.util.Set;
+import java.util.List;
 
 public abstract class AbstractCommand {
 
     private final String command;
-    private final Set<String> aliases;
-    private final Set<Permission> permissions;
+    private final List<String> aliases;
+    private final List<Permission> permissions;
     private final CommandType commandType;
 
-    public AbstractCommand(String command, Set<String> aliases, Set<Permission> permissions, CommandType commandType) {
+    public AbstractCommand(String command, List<String> aliases, List<Permission> permissions, CommandType commandType) {
         this.command = command;
         this.aliases = aliases;
         this.permissions = permissions;
@@ -25,11 +25,11 @@ public abstract class AbstractCommand {
         return command;
     }
 
-    public Set<String> getAliases() {
+    public List<String> getAliases() {
         return aliases;
     }
 
-    public Set<Permission> getPermissions() {
+    public List<Permission> getPermissions() {
         return permissions;
     }
 

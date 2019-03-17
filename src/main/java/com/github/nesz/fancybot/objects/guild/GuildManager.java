@@ -18,7 +18,7 @@ public class GuildManager {
 
     public static GuildInfo getOrCreate(Guild guild) {
         return GUILD_INFOS.computeIfAbsent(guild.getIdLong(), v -> {
-            GuildInfo info = new GuildInfo(guild.getIdLong(), Lang.ENGLISH, 100, true);
+            GuildInfo info = new GuildInfo(guild.getIdLong(), Lang.ENGLISH, 100, true, ".", false);
             Queries.insertGuild(info);
             return info;
         });
@@ -35,7 +35,14 @@ public class GuildManager {
 
             ResultSet rs = preparedStatement.executeQuery();
             while (rs.next()) {
-                GuildInfo guildInfo = new GuildInfo(rs.getLong("GUILD"), Lang.valueOf(rs.getString("LANG")), rs.getInt("VOLUME"), rs.getBoolean("NOTIFY"));
+                GuildInfo guildInfo = new GuildInfo(
+                        rs.getLong("GUILD"),
+                        Lang.valueOf(rs.getString("LANG")),
+                        rs.getInt("VOLUME"),
+                        rs.getBoolean("NOTIFY"),
+                        rs.getString("PREFIX"),
+                        rs.getBoolean("AUTOPLAY")
+                );
                 GUILD_INFOS.put(rs.getLong("GUILD"), guildInfo);
             }
         }

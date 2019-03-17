@@ -35,7 +35,7 @@ import java.util.regex.Pattern;
 public class PlaylistAddCommand extends AbstractCommand implements Choosable<Object[]>, Interactable<Page> {
 
     public PlaylistAddCommand() {
-        super("add", Collections.emptySet(), Collections.emptySet(), CommandType.SUB);
+        super("add", Collections.emptyList(), Collections.emptyList(), CommandType.SUB);
     }
 
     private static final Pattern YOUTUBE_URL_PATTERN = Pattern.compile("http(?:s?)://(?:www\\.)?youtu(?:be\\.com/watch\\?v=|\\.be/)([\\w\\-_]*)(&(amp;)?\u200C\u200B[\\w?\u200C\u200B=]*)?");

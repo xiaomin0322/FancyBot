@@ -9,6 +9,7 @@ import com.github.nesz.fancybot.objects.guild.GuildManager;
 import com.github.nesz.fancybot.objects.translation.Lang;
 import com.github.nesz.fancybot.objects.translation.Messages;
 import com.github.nesz.fancybot.utils.EmbedHelper;
+import com.github.nesz.fancybot.utils.MessagingHelper;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.*;
 import org.json.JSONObject;
@@ -19,30 +20,30 @@ import java.util.Collections;
 public class LyricsCommand extends AbstractCommand {
 
     public LyricsCommand() {
-        super("lyrics", Collections.emptySet(), Collections.emptySet(), CommandType.MAIN);
+        super("lyrics", Collections.emptyList(), Collections.emptyList(), CommandType.MAIN);
     }
 
     @Override
     public void execute(Message message, String[] args, TextChannel textChannel, Member member) {
         if (args.length > 1) {
             String mes = String.join(" ", args);
-            textChannel.sendMessage(lyricsEmbed(member, textChannel.getGuild(), mes)).queue();
+            MessagingHelper.sendAsync(textChannel, lyricsEmbed(member, textChannel.getGuild(), mes));
         }
         else {
             Lang lang = GuildManager.getOrCreate(textChannel.getGuild()).getLang();
             if (!PlayerManager.isPlaying(textChannel)) {
-                textChannel.sendMessage(Messages.MUSIC_NOT_PLAYING.get(lang)).queue();
+                MessagingHelper.sendAsync(textChannel, Messages.MUSIC_NOT_PLAYING.get(lang));
                 return;
             }
 
             Player player = PlayerManager.getExisting(textChannel);
             if (!member.getVoiceState().inVoiceChannel() || member.getVoiceState().getChannel() != player.getVoiceChannel()) {
-                textChannel.sendMessage(Messages.YOU_HAVE_TO_BE_IN_MY_VOICE_CHANNEL.get(lang)).queue();
+                MessagingHelper.sendAsync(textChannel, Messages.YOU_HAVE_TO_BE_IN_MY_VOICE_CHANNEL.get(lang));
                 return;
             }
 
             String title = normalize(player.getAudioPlayer().getPlayingTrack().getInfo().title);
-            textChannel.sendMessage(lyricsEmbed(member, textChannel.getGuild(), title)).queue();
+            MessagingHelper.sendAsync(textChannel, lyricsEmbed(member, textChannel.getGuild(), title));
         }
     }
 

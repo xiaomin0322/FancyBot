@@ -6,25 +6,30 @@ import com.github.nesz.fancybot.objects.guild.GuildInfo;
 import com.github.nesz.fancybot.objects.guild.GuildManager;
 import com.github.nesz.fancybot.objects.translation.Lang;
 import com.github.nesz.fancybot.objects.translation.Messages;
+import com.github.nesz.fancybot.utils.MessagingHelper;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.TextChannel;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 
 public class LangCommand extends AbstractCommand {
 
     public LangCommand() {
-        super("language", new HashSet<>(Collections.singletonList("lang")), Collections.emptySet(), CommandType.MAIN);
+        super("language", Collections.singletonList("lang"), Collections.emptyList(), CommandType.MAIN);
     }
 
     @Override
     public void execute(Message message, String[] args, TextChannel textChannel, Member member) {
         GuildInfo guildInfo = GuildManager.getOrCreate(textChannel.getGuild());
-        if (args.length < 1) {
-            textChannel.sendMessage(Messages.COMMAND_LANG_USAGE.get(guildInfo.getLang())).queue();
+        if (args.length != 1) {
+            MessagingHelper.sendAsync(textChannel, Messages.COMMAND_LANG_USAGE.get(guildInfo.getLang()));
+            return;
+        }
+
+        if (textChannel.getGuild().getOwnerIdLong() != member.getUser().getIdLong()) {
+            MessagingHelper.sendAsync(textChannel, Messages.YOU_HAVE_TO_BE_SERVER_OWNER.get(guildInfo.getLang()));
             return;
         }
 
@@ -35,11 +40,12 @@ public class LangCommand extends AbstractCommand {
         }
 
         if (lang == null) {
-            textChannel.sendMessage(Messages.LANGUAGE_NOT_FOUND.get(guildInfo.getLang())).queue();
+            MessagingHelper.sendAsync(textChannel, Messages.LANGUAGE_NOT_FOUND.get(guildInfo.getLang()));
             return;
         }
 
         guildInfo.setLang(lang);
-        textChannel.sendMessage(Messages.LANGUAGE_CHANGED.get(guildInfo.getLang()).replace("{LANGUAGE}", lang.name())).queue();
+        MessagingHelper.sendAsync(textChannel, Messages.LANGUAGE_CHANGED.get(guildInfo.getLang()).replace("{LANGUAGE}", lang.name()));
+
     }
 }
