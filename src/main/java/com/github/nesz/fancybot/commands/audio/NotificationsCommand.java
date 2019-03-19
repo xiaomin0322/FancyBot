@@ -2,7 +2,6 @@ package com.github.nesz.fancybot.commands.audio;
 
 import com.github.nesz.fancybot.commands.AbstractCommand;
 import com.github.nesz.fancybot.commands.CommandType;
-import com.github.nesz.fancybot.objects.audio.PlayerManager;
 import com.github.nesz.fancybot.objects.guild.GuildInfo;
 import com.github.nesz.fancybot.objects.guild.GuildManager;
 import com.github.nesz.fancybot.objects.translation.Messages;
@@ -31,14 +30,11 @@ public class NotificationsCommand extends AbstractCommand {
         if (args[0].equals("off")) {
             guildInfo.setNotifications(false);
             MessagingHelper.sendAsync(textChannel, Messages.NOTIFICATIONS_TURNED_OFF.get(guildInfo.getLang()));
+            return;
         }
-        else if (args[0].equals("on")) {
+        if (args[0].equals("on")) {
             guildInfo.setNotifications(true);
             MessagingHelper.sendAsync(textChannel, Messages.NOTIFICATIONS_TURNED_ON.get(guildInfo.getLang()));
-        }
-
-        if (PlayerManager.isPlaying(textChannel)) {
-            PlayerManager.getExisting(textChannel).setNotifications(guildInfo.notifications());
         }
     }
 }

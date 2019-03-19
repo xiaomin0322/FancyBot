@@ -8,14 +8,11 @@ import com.github.nesz.fancybot.objects.guild.GuildManager;
 import com.github.nesz.fancybot.objects.translation.Lang;
 import com.github.nesz.fancybot.objects.translation.Messages;
 import com.github.nesz.fancybot.utils.MessagingHelper;
-import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.TextChannel;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.concurrent.LinkedBlockingQueue;
 
 public class ShuffleCommand extends AbstractCommand {
 
@@ -38,21 +35,8 @@ public class ShuffleCommand extends AbstractCommand {
         }
 
         MessagingHelper.sendAsync(textChannel, Messages.SHUFFLING_QUEUE.get(lang), m -> {
-            LinkedBlockingQueue<AudioTrack> queue = player.getQueue();
-            ArrayList<AudioTrack> queueTemp;
-            Collections.shuffle(queueTemp = new ArrayList<>(queue));
-            queue.clear();
-            queue.addAll(queueTemp);
+            player.shuffleQueue();
             m.editMessage(Messages.SHUFFLED_QUEUE.get(lang)).queue();
         });
-
-        /*textChannel.sendMessage(Messages.SHUFFLING_QUEUE.get(lang)).queue(mes -> {
-            LinkedBlockingQueue<AudioTrack> queue = player.getQueue();
-            ArrayList<AudioTrack> queueTemp;
-            Collections.shuffle(queueTemp = new ArrayList<>(queue));
-            queue.clear();
-            queue.addAll(queueTemp);
-            mes.editMessage(Messages.SHUFFLED_QUEUE.get(lang)).queue();
-        });*/
     }
 }

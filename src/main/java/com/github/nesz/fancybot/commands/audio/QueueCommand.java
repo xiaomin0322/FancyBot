@@ -63,7 +63,7 @@ public class QueueCommand extends AbstractCommand implements Interactable<Page> 
         return eb.build();
     }
 
-    private static final String PUNCTUATION_REGEX = "[.,/#!$%^&*;:{}=\\-_`~()\"\'\\]\\[]";
+    private static final String PUNCTUATION_REGEX = "[.,/#!$%^&*;:{}=\\-_`~()\"\'\\]\\[|]";
     private final static int ITEMS_PER_PAGE = 15;
 
     private MessageEmbed printQueue(TextChannel textChannel, MessageEmbed.Footer footer, Player player, int page) {

@@ -42,6 +42,10 @@ public enum Messages {
     AUTO_PLAY_TURNED_ON("autoPlayTurnedOn"),
     AUTO_PLAY_TURNED_OFF("autoPlayTurnedOff"),
     DICTIONARY_NOTHING_FOUND("dictionaryNothingFound"),
+    TRACK_MOVE_INVALID_POSITION("trackMoveInvalidPosition"),
+    TRACK_MOVE_SAME_POSITIONS("trackMoveSamePositions"),
+    TRACK_MOVED("trackMoved"),
+
 
     COMMAND_PLAYLIST_USAGE("commandPlaylistUsage"),
     COMMAND_FAST_FORWARD_USAGE("commandFastForwardUsage"),
@@ -55,7 +59,8 @@ public enum Messages {
     COMMAND_LANG_USAGE("commandLangUsage"),
     COMMAND_PREFIX_USAGE("commandPrefixUsage"),
     COMMAND_AUTO_PLAY_USAGE("commandAutoPlayUsage"),
-    COMMAND_DICTIONARY_USAGE("commandDictionaryUsage");
+    COMMAND_DICTIONARY_USAGE("commandDictionaryUsage"),
+    COMMAND_MOVE_USAGE("commandMoveUsage");
 
 
     private String key;

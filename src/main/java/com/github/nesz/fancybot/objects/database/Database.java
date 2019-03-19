@@ -21,7 +21,7 @@ public class Database {
         String base = Config.MYSQL_BASE;
         String user = Config.MYSQL_USER;
         String pass = Config.MYSQL_PASS;
-        int    port = Integer.valueOf(Config.MYSQL_PORT); //ik d:
+        String port = Config.MYSQL_PORT;
 
         dataSource.setJdbcUrl("jdbc:mysql://" + host + ":" + port + "/" + base);
         dataSource.setUsername(user);

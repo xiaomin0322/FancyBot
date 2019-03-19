@@ -1,6 +1,5 @@
 package com.github.nesz.fancybot.listeners;
 
-import com.github.nesz.fancybot.FancyBot;
 import com.github.nesz.fancybot.objects.command.CommandManager;
 import com.github.nesz.fancybot.objects.reactions.ChoosableManager;
 import net.dv8tion.jda.api.entities.User;
@@ -23,8 +22,6 @@ public class GuildMessageReceivedListener extends ListenerAdapter {
         if (author.isBot()) {
             return;
         }
-
-        FancyBot.LOG.debug(rawMessage);
 
         Consumer<GuildMessageReceivedEvent> consumer = ChoosableManager.getChoosables().getIfPresent(author.getIdLong());
         if (consumer != null) {

@@ -8,52 +8,49 @@ import com.github.nesz.fancybot.objects.translation.Messages;
 import com.github.nesz.fancybot.utils.MessagingHelper;
 import com.github.nesz.fancybot.utils.StringUtils;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
-import com.sedmelluq.discord.lavaplayer.player.event.AudioEventAdapter;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
-import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.VoiceChannel;
 
-import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.stream.Collectors;
 
-public class Player extends AudioEventAdapter {
+public class Player {
 
-    private LinkedBlockingQueue<AudioTrack> queue;
-    private final List<AudioTrack> previous;
-    private final GuildInfo guildInfo;
+    private final LinkedList<AudioTrack> queue;
+    private final LinkedList<AudioTrack> previousTracks;
+    private final PlayerScheduler playerScheduler;
     private final TextChannel triggerChannel;
     private final VoiceChannel voiceChannel;
     private final AudioPlayer audioPlayer;
     private final AudioHandler audioHandler;
-    private boolean notifications;
+    private final GuildInfo guildInfo;
     private RepeatMode repeatMode;
 
     public Player(AudioPlayer audioPlayer, TextChannel triggerChannel, VoiceChannel voiceChannel) {
         this.guildInfo = GuildManager.getOrCreate(triggerChannel.getGuild());
         this.audioPlayer = audioPlayer;
-        this.audioPlayer.addListener(this);
+        this.playerScheduler = new PlayerScheduler(this);
+        this.audioPlayer.addListener(playerScheduler);
         this.audioHandler = new AudioHandler(audioPlayer);
         this.triggerChannel = triggerChannel;
         this.voiceChannel   = voiceChannel;
-        this.queue = new LinkedBlockingQueue<>();
-        this.previous = new ArrayList<>();
-        this.notifications = guildInfo.notifications();
+        this.queue = new LinkedList<>();
+        this.previousTracks = new LinkedList<>();
         this.repeatMode = RepeatMode.NONE;
         getGuild().getAudioManager().setSendingHandler(audioHandler);
         audioPlayer.setVolume(guildInfo.getVolume());
     }
 
-    public LinkedBlockingQueue<AudioTrack> getQueue() {
+    public LinkedList<AudioTrack> getQueue() {
         return queue;
     }
 
-    public List<AudioTrack> getPrevious() {
-        return previous;
+    public List<AudioTrack> getPreviousTracks() {
+        return previousTracks;
     }
 
     public TextChannel getTriggerChannel() {
@@ -68,20 +65,20 @@ public class Player extends AudioEventAdapter {
         return audioHandler;
     }
 
+    public PlayerScheduler getPlayerScheduler() {
+        return playerScheduler;
+    }
+
+    public GuildInfo getGuildInfo() {
+        return guildInfo;
+    }
+
     public RepeatMode getRepeatMode() {
         return repeatMode;
     }
 
     public void setRepeatMode(RepeatMode repeatMode) {
         this.repeatMode = repeatMode;
-    }
-
-    public boolean notifications() {
-        return notifications;
-    }
-
-    public void setNotifications(boolean notifications) {
-        this.notifications = notifications;
     }
 
     public AudioPlayer getAudioPlayer() {
@@ -98,8 +95,12 @@ public class Player extends AudioEventAdapter {
         }
     }
 
+    public void shuffleQueue() {
+        Collections.shuffle(queue);
+    }
+
     private void messageNotify() {
-        if (!notifications) {
+        if (!guildInfo.notifications()) {
             return;
         }
         AudioTrackInfo info = audioPlayer.getPlayingTrack().getInfo();
@@ -108,13 +109,8 @@ public class Player extends AudioEventAdapter {
         MessagingHelper.sendAsync(triggerChannel, Emote.PLAY.asEmote() + " | " + translated + " `" + info.title + "`" + " `" + StringUtils.getDurationMinutes(info.length) + "`");
     }
 
-    private AudioTrack getPreviousTrack() {
-        return previous.get(previous.size() - 1);
-    }
-
     public void previousTrack() {
-        audioPlayer.startTrack(getPreviousTrack(), false);
-        previous.remove(getPreviousTrack());
+        audioPlayer.startTrack(previousTracks.pollLast(), false);
         messageNotify();
     }
 
@@ -124,7 +120,7 @@ public class Player extends AudioEventAdapter {
                 audioPlayer.stopTrack();
             }
             if (guildInfo.isAutoPlay()) {
-                AudioTrack previousTrack = getPreviousTrack();
+                AudioTrack previousTrack = previousTracks.pollLast();
                 if (previousTrack == null) {
                     return;
                 }
@@ -135,7 +131,10 @@ public class Player extends AudioEventAdapter {
             }
             return;
         }
-        queue = queue.stream().skip(howMany).collect(Collectors.toCollection(LinkedBlockingQueue::new));
+
+        for (int i = 1; i < howMany; i++) {
+            queue.poll();
+        }
 
         nextTrack();
     }
@@ -146,17 +145,13 @@ public class Player extends AudioEventAdapter {
             if (audioPlayer.getPlayingTrack() != null) {
                 audioPlayer.stopTrack();
             }
-            FancyBot.LOG.debug("EMPTY");
             if (guildInfo.isAutoPlay()) {
-                FancyBot.LOG.debug("AUTOPLAY");
-                AudioTrack previousTrack = getPreviousTrack();
+                AudioTrack previousTrack = previousTracks.pollLast();
                 if (previousTrack == null) {
                     return;
                 }
-                FancyBot.LOG.debug("previousTrack");
                 AudioTrack related = FancyBot.getYouTubeClient().getRelatedVideo(previousTrack.getIdentifier());
                 if (related == null) {
-                    FancyBot.LOG.debug("related == null");
                     return;
                 }
                 queue.add(related);
@@ -168,27 +163,6 @@ public class Player extends AudioEventAdapter {
 
         audioPlayer.startTrack(queue.poll(), false);
         messageNotify();
-    }
-
-    @Override
-    public void onTrackEnd(AudioPlayer audioPlayer, AudioTrack track, AudioTrackEndReason endReason) {
-        if (!endReason.mayStartNext) {
-            return;
-        }
-
-        previous.add(track.makeClone());
-        switch (repeatMode) {
-            case NONE:
-                nextTrack();
-                break;
-            case TRACK:
-                audioPlayer.startTrack(track.makeClone(), false);
-                break;
-            case PLAYLIST:
-                queue.add(track.makeClone());
-                nextTrack();
-                break;
-        }
     }
 
 }

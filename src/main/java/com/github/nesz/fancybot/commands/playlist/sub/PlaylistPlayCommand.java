@@ -18,6 +18,7 @@ import com.github.nesz.fancybot.utils.EmbedHelper;
 import com.github.nesz.fancybot.utils.StringUtils;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 
@@ -30,7 +31,9 @@ import java.util.function.Consumer;
 public class PlaylistPlayCommand extends AbstractCommand implements Choosable<List<Playlist>>, Interactable<Page> {
 
     public PlaylistPlayCommand() {
-        super("play", Collections.singletonList("load"), Collections.emptyList(), CommandType.SUB);
+        super("play", Collections.singletonList("load"), Arrays.asList(
+                Permission.VOICE_CONNECT, Permission.VOICE_SPEAK
+        ), CommandType.SUB);
     }
 
     @Override

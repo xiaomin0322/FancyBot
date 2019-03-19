@@ -38,7 +38,7 @@ public class ConfigLoader {
             try (BufferedReader br = Files.newBufferedReader(Paths.get(path))) {
                 json += br.lines().collect(Collectors.joining());
             } catch (IOException e) {
-                FancyBot.LOG.debug("Error occurred while accessing config file", e);
+                FancyBot.LOG.error("Error occurred while accessing config file", e);
             }
 
             JSONObject jo = new JSONObject(json);
@@ -48,7 +48,7 @@ public class ConfigLoader {
                 field.set(temp, jo.getString(field.getName()));
             }
         } catch (InstantiationException | IllegalAccessException e) {
-            e.printStackTrace();
+            FancyBot.LOG.error("Error occurred while overriding field", e);
         }
     }
 }

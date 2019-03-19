@@ -43,7 +43,7 @@ public enum Lang {
         try (BufferedReader br = Files.newBufferedReader(Paths.get(filePath))) {
             properties.load(br);
         } catch (IOException e) {
-            FancyBot.LOG.debug("Could not load property file", e);
+            FancyBot.LOG.error("Could not load property file", e);
         }
 
         return (Map) properties;

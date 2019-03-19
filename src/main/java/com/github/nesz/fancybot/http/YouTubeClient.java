@@ -41,7 +41,7 @@ public class YouTubeClient extends HTTPClient {
                 .addPathSegments(PATH_SEARCH)
                 .addQueryParameter("relatedToVideoId", id)
                 .addQueryParameter("part", "snippet")
-                .addQueryParameter("maxResults", "1")
+                .addQueryParameter("maxResults", "5") //When set to 1 its not guaranteed to return anything, 5 just to be sure
                 .addQueryParameter("type", "video")
                 .addEncodedQueryParameter("fields", RELATED_FIELDS)
                 .addQueryParameter("key", token)
@@ -65,7 +65,6 @@ public class YouTubeClient extends HTTPClient {
             if (items.isEmpty()) {
                 return null;
             }
-            FancyBot.LOG.debug(items);
 
             JSONObject trackData = items.getJSONObject(0);
             String trackId = trackData.getJSONObject("id").getString("videoId");

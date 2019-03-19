@@ -8,21 +8,28 @@ import com.github.nesz.fancybot.objects.guild.GuildManager;
 import com.github.nesz.fancybot.objects.translation.Lang;
 import com.github.nesz.fancybot.objects.translation.Messages;
 import com.github.nesz.fancybot.utils.MessagingHelper;
+import com.github.nesz.fancybot.utils.StringUtils;
+import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.TextChannel;
 
 import java.util.Collections;
 
-public class PreviousCommand extends AbstractCommand {
+public class MoveCommand extends AbstractCommand {
 
-    public PreviousCommand() {
-        super("previous", Collections.singletonList("prev"), Collections.emptyList(), CommandType.MAIN);
+    public MoveCommand() {
+        super("move", Collections.emptyList(), Collections.emptyList(), CommandType.MAIN);
     }
 
     @Override
     public void execute(Message message, String[] args, TextChannel textChannel, Member member) {
         Lang lang = GuildManager.getOrCreate(textChannel.getGuild()).getLang();
+        if (args.length != 2 || !StringUtils.isNumeric(args[0]) || !StringUtils.isNumeric(args[1])) {
+            MessagingHelper.sendAsync(textChannel, Messages.COMMAND_MOVE_USAGE.get(lang));
+            return;
+        }
+
         if (!PlayerManager.isPlaying(textChannel)) {
             MessagingHelper.sendAsync(textChannel, Messages.MUSIC_NOT_PLAYING.get(lang));
             return;
@@ -34,11 +41,26 @@ public class PreviousCommand extends AbstractCommand {
             return;
         }
 
-        if (player.getPreviousTracks().isEmpty()) {
-            MessagingHelper.sendAsync(textChannel, Messages.QUEUE_THERE_IS_NO_PREVIOUS_SONG.get(lang));
+        int which = Integer.valueOf(args[0]) - 1;
+        int where = Integer.valueOf(args[1]) - 1;
+
+        if (which > player.getQueue().size() || where > player.getQueue().size() || which < 0 || where < 0) {
+            MessagingHelper.sendAsync(textChannel, Messages.TRACK_MOVE_INVALID_POSITION.get(lang));
             return;
         }
 
-        player.previousTrack();
+        if (which == where) {
+            MessagingHelper.sendAsync(textChannel, Messages.TRACK_MOVE_SAME_POSITIONS.get(lang));
+            return;
+        }
+
+        AudioTrack whichTrack = player.getQueue().remove(which);
+        AudioTrack whereTrack = player.getQueue().remove(where);
+
+        player.getQueue().add(where, whichTrack);
+        player.getQueue().add(which, whereTrack);
+
+
+        MessagingHelper.sendAsync(textChannel, Messages.TRACK_MOVED.get(lang));
     }
 }

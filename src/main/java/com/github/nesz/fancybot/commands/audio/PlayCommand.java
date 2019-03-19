@@ -9,17 +9,19 @@ import com.github.nesz.fancybot.objects.guild.GuildManager;
 import com.github.nesz.fancybot.objects.translation.Lang;
 import com.github.nesz.fancybot.objects.translation.Messages;
 import com.github.nesz.fancybot.utils.MessagingHelper;
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.TextChannel;
 
 import java.util.Arrays;
-import java.util.Collections;
 
 public class PlayCommand extends AbstractCommand {
 
     public PlayCommand() {
-        super("play", Arrays.asList("pla", "start"), Collections.emptyList(), CommandType.MAIN);
+        super("play", Arrays.asList("pla", "start"), Arrays.asList(
+                Permission.VOICE_CONNECT, Permission.VOICE_SPEAK
+        ), CommandType.MAIN);
     }
 
     private static final String YOUTUBE_BASE = "https://www.youtube.com/watch?v=";

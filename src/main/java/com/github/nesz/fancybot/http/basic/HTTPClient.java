@@ -1,6 +1,5 @@
 package com.github.nesz.fancybot.http.basic;
 
-import com.github.nesz.fancybot.FancyBot;
 import okhttp3.*;
 
 import java.io.File;
@@ -11,9 +10,9 @@ public abstract class HTTPClient {
 
     protected static final String SCHEME_HTTPS = "https";
 
-    protected static final OkHttpClient HTTP_CLIENT = new OkHttpClient.Builder()
+    private static final OkHttpClient HTTP_CLIENT = new OkHttpClient.Builder()
             .addNetworkInterceptor(provideCacheInterceptor())
-            .cache(new Cache(new File("cache"), 200 * 1024 * 1024)) //200mb
+            .cache(new Cache(new File("cache"), 1024 * 1024 * 1024)) //1GB
             .followRedirects(false)
             .retryOnConnectionFailure(false)
             .readTimeout(30, TimeUnit.SECONDS)
@@ -26,7 +25,7 @@ public abstract class HTTPClient {
         return chain -> {
             Response response = chain.proceed(chain.request());
             CacheControl cacheControl = new CacheControl.Builder()
-                    .maxAge(3, TimeUnit.DAYS)
+                    .maxAge(7, TimeUnit.DAYS)
                     .build();
 
             return response.newBuilder()
@@ -36,7 +35,6 @@ public abstract class HTTPClient {
     }
 
     protected static Future<Response> asyncRequest(Request request) {
-        FancyBot.LOG.debug(request.url());
         Call call = HTTP_CLIENT.newCall(request);
 
         HTTPResponseFuture result = new HTTPResponseFuture();

@@ -63,7 +63,7 @@ public class FileUtils {
                 }
                 InputStream is = FancyBot.class.getClassLoader().getResourceAsStream(dir + "/" + file);
                 if (is == null) {
-                    FancyBot.LOG.debug("Resource file `" + file + "` does not exists");
+                    FancyBot.LOG.error("Resource file `" + file + "` does not exists");
                     continue;
                 }
                 Files.copy(is, Paths.get(dirPath.toString() + "/" + file));

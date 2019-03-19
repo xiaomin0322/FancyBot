@@ -67,7 +67,7 @@ public class LyricsCommand extends AbstractCommand {
 
         embed.setTitle(searchData.getString("full_title"), searchData.getString("url"));
         embed.setThumbnail(searchData.getString("song_art_image_thumbnail_url"));
-        embed.setDescription(lyrics.substring(0, 2043 - embed.length()));
+        embed.setDescription(lyrics.substring(0, Math.min(embed.length(), MessageEmbed.TEXT_MAX_LENGTH - embed.length())));
         embed.appendDescription("\n...");
         return embed.build();
     }
