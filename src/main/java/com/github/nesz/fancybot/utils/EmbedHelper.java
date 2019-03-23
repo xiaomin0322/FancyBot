@@ -1,39 +1,40 @@
 package com.github.nesz.fancybot.utils;
 
-import com.github.nesz.fancybot.FancyBot;
-import com.github.nesz.fancybot.objects.guild.GuildManager;
+import com.github.nesz.fancybot.commands.CommandContext;
+import com.github.nesz.fancybot.config.Constants;
+import com.github.nesz.fancybot.objects.translation.Language;
 import com.github.nesz.fancybot.objects.translation.Messages;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.MessageEmbed;
-import net.dv8tion.jda.api.entities.User;
 
 import java.awt.*;
 
-public class EmbedHelper {
+public class EmbedHelper
+{
 
-    public static EmbedBuilder basicEmbed(Color color, Member invoker) {
-        MessageEmbed.Footer footer = getFooter(invoker);
+    public static EmbedBuilder basicEmbed(final Color color, final CommandContext context)
+    {
+        final String footer = String.format("%s %s#%s | FancyBot %s",
+                context.translate(Messages.INVOKED_BY),
+                context.author().getName(),
+                context.author().getDiscriminator(),
+                Constants.VERSION);
+        
         return new EmbedBuilder()
                 .setColor(color)
-                .setFooter(footer.getText(), footer.getIconUrl());
+                .setFooter(footer, context.author().getAvatarUrl());
     }
 
-    public static MessageEmbed.Footer getFooter(Member invoker) {
-        User user = invoker.getUser();
-        String invoked = Messages.INVOKED_BY.get(GuildManager.getOrCreate(invoker.getGuild()).getLang());
-        return new MessageEmbed.Footer(
-                invoked + " " + user.getName() + "#" + user.getDiscriminator() + " | FancyBot " + FancyBot.getVersion(),
-                user.getAvatarUrl(),
-                null
-        );
-    }
+    public static EmbedBuilder basicEmbed(final Color color, final Member invoker, final Language language)
+    {
+        final String footer = String.format("%s %s#%s | FancyBot %s",
+                Messages.INVOKED_BY.get(language),
+                invoker.getUser().getName(),
+                invoker.getUser().getDiscriminator(),
+                Constants.VERSION);
 
-    public static String bold(String text) {
-        return "**" + text + "**";
-    }
-
-    public static String asLink(String text, String link) {
-        return "[" + text + "](" + link + ")";
+        return new EmbedBuilder()
+                .setColor(color)
+                .setFooter(footer, invoker.getUser().getAvatarUrl());
     }
 }

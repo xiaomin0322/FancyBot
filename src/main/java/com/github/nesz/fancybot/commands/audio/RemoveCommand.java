@@ -1,68 +1,73 @@
 package com.github.nesz.fancybot.commands.audio;
 
-import com.github.nesz.fancybot.commands.AbstractCommand;
+import com.github.nesz.fancybot.commands.Command;
+import com.github.nesz.fancybot.commands.CommandContext;
 import com.github.nesz.fancybot.commands.CommandType;
 import com.github.nesz.fancybot.objects.audio.Player;
 import com.github.nesz.fancybot.objects.audio.PlayerManager;
-import com.github.nesz.fancybot.objects.guild.GuildManager;
-import com.github.nesz.fancybot.objects.translation.Lang;
 import com.github.nesz.fancybot.objects.translation.Messages;
-import com.github.nesz.fancybot.utils.MessagingHelper;
 import com.github.nesz.fancybot.utils.StringUtils;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
-import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.TextChannel;
 
 import java.util.ArrayList;
-import java.util.Collections;
 
-public class RemoveCommand extends AbstractCommand {
+public class RemoveCommand extends Command
+{
 
-    public RemoveCommand() {
-        super("remove", Collections.emptyList(), Collections.emptyList(), CommandType.MAIN);
+    public RemoveCommand()
+    {
+        super("remove", CommandType.PARENT);
     }
 
     @Override
-    public void execute(Message message, String[] args, TextChannel textChannel, Member member) {
-        Lang lang = GuildManager.getOrCreate(textChannel.getGuild()).getLang();
-        if (args.length < 1) {
-            MessagingHelper.sendAsync(textChannel, Messages.COMMAND_REMOVE_USAGE.get(lang));
+    public void execute(final CommandContext context)
+    {
+        if (!context.hasArgs())
+        {
+            context.respond(Messages.COMMAND_REMOVE_USAGE);
             return;
         }
 
-        if (!StringUtils.isNumeric(args[0])) {
-            MessagingHelper.sendAsync(textChannel, Messages.COMMAND_REMOVE_USAGE.get(lang));
+        if (!StringUtils.isNumeric(context.arg(0)))
+        {
+            context.respond(Messages.COMMAND_REMOVE_USAGE);
             return;
         }
 
-        if (!PlayerManager.isPlaying(textChannel)) {
-            MessagingHelper.sendAsync(textChannel, Messages.MUSIC_NOT_PLAYING.get(lang));
+        if (!PlayerManager.isPlaying(context.guild()))
+        {
+            context.respond(Messages.MUSIC_NOT_PLAYING);
             return;
         }
 
-        Player player = PlayerManager.getExisting(textChannel);
-        if (!member.getVoiceState().inVoiceChannel() || member.getVoiceState().getChannel() != player.getVoiceChannel()) {
-            MessagingHelper.sendAsync(textChannel, Messages.YOU_HAVE_TO_BE_IN_MY_VOICE_CHANNEL.get(lang));
+        final Player player = PlayerManager.getExisting(context.guild());
+
+        if (!PlayerManager.isInPlayingVoiceChannel(player, context.member()))
+        {
+            context.respond(Messages.YOU_HAVE_TO_BE_IN_MY_VOICE_CHANNEL);
             return;
         }
 
-        ArrayList<AudioTrack> tracks = new ArrayList<>(player.getQueue());
-        int remove = Integer.parseInt(args[0]);
-        if (tracks.size() < remove) {
-            MessagingHelper.sendAsync(textChannel, Messages.TRACK_WITH_ID_DOES_NOT_EXISTS.get(lang));
+        final ArrayList<AudioTrack> tracks = new ArrayList<>(player.getQueue().getTracks());
+        final int remove = Integer.valueOf(context.arg(0));
+
+        if (tracks.size() < remove)
+        {
+            context.respond(Messages.TRACK_WITH_ID_DOES_NOT_EXISTS);
             return;
         }
 
-        String title = tracks.get(remove - 1).getInfo().title;
-        for (AudioTrack track : player.getQueue()) {
-            if (track.getInfo().title.equals(title)) {
-                player.getQueue().remove(track);
+        final String title = tracks.get(remove - 1).getInfo().title;
+
+        for (final AudioTrack track : player.getQueue().getTracks())
+        {
+            if (track.getInfo().title.equals(title))
+            {
+                player.getQueue().getTracks().remove(track);
             }
         }
 
-        String msg = Messages.TRACK_REMOVED_FROM_QUEUE.get(lang).replace("{TITLE}", title).replace("{ID}", String.valueOf(remove));
-        MessagingHelper.sendAsync(textChannel, msg);
-
+        context.respond(context.translate(Messages.TRACK_REMOVED_FROM_QUEUE)
+               .replace("{TITLE}", title).replace("{ID}", String.valueOf(remove)));
     }
 }

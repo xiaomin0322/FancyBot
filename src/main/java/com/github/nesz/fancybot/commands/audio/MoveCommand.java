@@ -1,66 +1,67 @@
 package com.github.nesz.fancybot.commands.audio;
 
-import com.github.nesz.fancybot.commands.AbstractCommand;
+import com.github.nesz.fancybot.commands.Command;
+import com.github.nesz.fancybot.commands.CommandContext;
 import com.github.nesz.fancybot.commands.CommandType;
 import com.github.nesz.fancybot.objects.audio.Player;
 import com.github.nesz.fancybot.objects.audio.PlayerManager;
-import com.github.nesz.fancybot.objects.guild.GuildManager;
-import com.github.nesz.fancybot.objects.translation.Lang;
 import com.github.nesz.fancybot.objects.translation.Messages;
-import com.github.nesz.fancybot.utils.MessagingHelper;
 import com.github.nesz.fancybot.utils.StringUtils;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
-import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.TextChannel;
 
-import java.util.Collections;
+public class MoveCommand extends Command
+{
 
-public class MoveCommand extends AbstractCommand {
-
-    public MoveCommand() {
-        super("move", Collections.emptyList(), Collections.emptyList(), CommandType.MAIN);
+    public MoveCommand()
+    {
+        super("move", CommandType.PARENT);
     }
 
     @Override
-    public void execute(Message message, String[] args, TextChannel textChannel, Member member) {
-        Lang lang = GuildManager.getOrCreate(textChannel.getGuild()).getLang();
-        if (args.length != 2 || !StringUtils.isNumeric(args[0]) || !StringUtils.isNumeric(args[1])) {
-            MessagingHelper.sendAsync(textChannel, Messages.COMMAND_MOVE_USAGE.get(lang));
+    public void execute(final CommandContext context)
+    {
+        if (context.args().length != 2 || !StringUtils.isNumeric(context.arg(0)) || !StringUtils.isNumeric(context.arg(1)))
+        {
+            context.respond(Messages.COMMAND_MOVE_USAGE);
             return;
         }
 
-        if (!PlayerManager.isPlaying(textChannel)) {
-            MessagingHelper.sendAsync(textChannel, Messages.MUSIC_NOT_PLAYING.get(lang));
+        if (!PlayerManager.isPlaying(context.guild()))
+        {
+            context.respond(Messages.MUSIC_NOT_PLAYING);
             return;
         }
 
-        Player player = PlayerManager.getExisting(textChannel);
-        if (!member.getVoiceState().inVoiceChannel() || member.getVoiceState().getChannel() != player.getVoiceChannel()) {
-            MessagingHelper.sendAsync(textChannel, Messages.YOU_HAVE_TO_BE_IN_MY_VOICE_CHANNEL.get(lang));
+        final Player player = PlayerManager.getExisting(context.guild());
+
+        if (!PlayerManager.isInPlayingVoiceChannel(player, context.member()))
+        {
+            context.respond(Messages.YOU_HAVE_TO_BE_IN_MY_VOICE_CHANNEL);
             return;
         }
 
-        int which = Integer.valueOf(args[0]) - 1;
-        int where = Integer.valueOf(args[1]) - 1;
+        final int which = Integer.valueOf(context.arg(0)) - 1;
+        final int where = Integer.valueOf(context.arg(1)) - 1;
 
-        if (which > player.getQueue().size() || where > player.getQueue().size() || which < 0 || where < 0) {
-            MessagingHelper.sendAsync(textChannel, Messages.TRACK_MOVE_INVALID_POSITION.get(lang));
+        if (which > player.getQueue().size() || where > player.getQueue().size() || which < 0 || where < 0)
+        {
+            context.respond(Messages.TRACK_MOVE_INVALID_POSITION);
             return;
         }
 
-        if (which == where) {
-            MessagingHelper.sendAsync(textChannel, Messages.TRACK_MOVE_SAME_POSITIONS.get(lang));
+        if (which == where)
+        {
+            context.respond(Messages.TRACK_MOVE_SAME_POSITIONS);
             return;
         }
 
-        AudioTrack whichTrack = player.getQueue().remove(which);
-        AudioTrack whereTrack = player.getQueue().remove(where);
+        final AudioTrack whichTrack = player.getQueue().getTracks().remove(which);
+        final AudioTrack whereTrack = player.getQueue().getTracks().remove(where);
 
-        player.getQueue().add(where, whichTrack);
-        player.getQueue().add(which, whereTrack);
+        player.getQueue().getTracks().add(where, whichTrack);
+        player.getQueue().getTracks().add(which, whereTrack);
 
 
-        MessagingHelper.sendAsync(textChannel, Messages.TRACK_MOVED.get(lang));
+        context.respond(Messages.TRACK_MOVED);
     }
 }

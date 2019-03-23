@@ -8,21 +8,25 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 
-public class HTTPResponseFuture implements Callback {
+public class HTTPResponseFuture implements Callback
+{
 
     final CompletableFuture<Response> future = new CompletableFuture<>();
 
-    HTTPResponseFuture() {
+    HTTPResponseFuture()
+    {
 
     }
 
     @Override
-    public void onFailure(@NotNull Call call, @NotNull IOException e) {
+    public void onFailure(@NotNull final Call call, @NotNull final IOException e)
+    {
         future.completeExceptionally(e);
     }
 
     @Override
-    public void onResponse(@NotNull Call call, @NotNull Response response) {
+    public void onResponse(@NotNull final Call call, @NotNull final Response response)
+    {
         future.complete(response);
     }
 }

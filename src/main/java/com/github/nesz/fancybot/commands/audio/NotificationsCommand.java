@@ -1,40 +1,43 @@
 package com.github.nesz.fancybot.commands.audio;
 
-import com.github.nesz.fancybot.commands.AbstractCommand;
+import com.github.nesz.fancybot.commands.Command;
+import com.github.nesz.fancybot.commands.CommandContext;
 import com.github.nesz.fancybot.commands.CommandType;
-import com.github.nesz.fancybot.objects.guild.GuildInfo;
-import com.github.nesz.fancybot.objects.guild.GuildManager;
 import com.github.nesz.fancybot.objects.translation.Messages;
-import com.github.nesz.fancybot.utils.MessagingHelper;
-import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.TextChannel;
 
 import java.util.Arrays;
-import java.util.Collections;
 
-public class NotificationsCommand extends AbstractCommand {
+public class NotificationsCommand extends Command
+{
 
-    public NotificationsCommand() {
-        super("notifications", Arrays.asList("notify", "alerts"), Collections.emptyList(), CommandType.MAIN);
+    public NotificationsCommand()
+    {
+        super("notifications", Arrays.asList("notify", "alerts"), CommandType.PARENT);
     }
 
     @Override
-    public void execute(Message message, String[] args, TextChannel textChannel, Member member) {
-        GuildInfo guildInfo = GuildManager.getOrCreate(textChannel.getGuild());
-        if (args.length != 1) {
-            MessagingHelper.sendAsync(textChannel, Messages.COMMAND_NOTIFICATIONS_USAGE.get(guildInfo.getLang()));
+    public void execute(final CommandContext context)
+    {
+        if (context.hasArgs())
+        {
+            context.respond(Messages.COMMAND_NOTIFICATIONS_USAGE);
             return;
         }
 
-        if (args[0].equals("off")) {
-            guildInfo.setNotifications(false);
-            MessagingHelper.sendAsync(textChannel, Messages.NOTIFICATIONS_TURNED_OFF.get(guildInfo.getLang()));
+        if (context.arg(0).equalsIgnoreCase("off"))
+        {
+            context.guildCache().setNotifications(false);
+            context.respond(Messages.NOTIFICATIONS_TURNED_OFF);
             return;
         }
-        if (args[0].equals("on")) {
-            guildInfo.setNotifications(true);
-            MessagingHelper.sendAsync(textChannel, Messages.NOTIFICATIONS_TURNED_ON.get(guildInfo.getLang()));
+
+        if (context.arg(0).equalsIgnoreCase("on"))
+        {
+            context.guildCache().setNotifications(true);
+            context.respond(Messages.NOTIFICATIONS_TURNED_ON);
+            return;
         }
+
+        context.respond(Messages.COMMAND_NOTIFICATIONS_USAGE);
     }
 }

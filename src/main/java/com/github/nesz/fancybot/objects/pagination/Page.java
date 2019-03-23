@@ -1,64 +1,63 @@
 package com.github.nesz.fancybot.objects.pagination;
 
-import net.dv8tion.jda.api.entities.TextChannel;
-
-public class Page<E> {
+public class Page<E>
+{
 
     private final int maxPage;
-    private final TextChannel textChannel;
     private int currentPage;
     private E extraData;
 
-    public Page(int currentPage, int maxPage, TextChannel textChannel) {
+    public Page(final int currentPage, final int maxPage)
+    {
         this.currentPage = currentPage;
         this.maxPage = maxPage;
-        this.textChannel = textChannel;
     }
 
-    public Page(int currentPage, int maxPage, TextChannel textChannel, E extra) {
+    public Page(final int currentPage, final int maxPage, final E extra)
+    {
         this.currentPage = currentPage;
         this.maxPage = maxPage;
-        this.textChannel = textChannel;
         this.extraData = extra;
     }
 
-    public void setExtraData(E data) {
-        extraData = data;
-    }
-
-    public E getExtra() {
+    public E getExtra()
+    {
         return extraData;
     }
 
-    public boolean previousPage() {
-        if (currentPage > 1) {
+    public boolean previousPage()
+    {
+        if (currentPage > 1)
+        {
             currentPage--;
             return true;
         }
         return false;
     }
 
-    public boolean nextPage() {
-        if (currentPage < maxPage) {
+    public boolean nextPage()
+    {
+        if (currentPage < maxPage)
+        {
             currentPage++;
             return true;
         }
         return false;
     }
 
-    public int getMaxPage() {
+    public int getMaxPage()
+    {
         return maxPage;
     }
 
-    public int getCurrentPage() {
+    public int getCurrentPage()
+    {
         return currentPage;
     }
 
-    public void setCurrentPage(int currentPage) {
+    public void setCurrentPage(final int currentPage)
+    {
         this.currentPage = currentPage;
     }
 
-    public TextChannel getTextChannel() {
-        return textChannel;
-    }
 }

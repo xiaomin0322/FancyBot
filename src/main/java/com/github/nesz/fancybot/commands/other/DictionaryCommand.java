@@ -1,61 +1,70 @@
 package com.github.nesz.fancybot.commands.other;
 
 import com.github.nesz.fancybot.FancyBot;
-import com.github.nesz.fancybot.commands.AbstractCommand;
+import com.github.nesz.fancybot.objects.MessageBuilder;
+import com.github.nesz.fancybot.commands.Command;
+import com.github.nesz.fancybot.commands.CommandContext;
 import com.github.nesz.fancybot.commands.CommandType;
-import com.github.nesz.fancybot.objects.guild.GuildManager;
+import com.github.nesz.fancybot.http.basic.HTTPResponse;
 import com.github.nesz.fancybot.objects.reactions.Emote;
-import com.github.nesz.fancybot.objects.translation.Lang;
 import com.github.nesz.fancybot.objects.translation.Messages;
 import com.github.nesz.fancybot.utils.EmbedHelper;
-import com.github.nesz.fancybot.utils.MessagingHelper;
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.TextChannel;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.awt.*;
 import java.util.Arrays;
-import java.util.Collections;
 
-public class DictionaryCommand extends AbstractCommand {
+public class DictionaryCommand extends Command
+{
 
-    public DictionaryCommand() {
-        super("dictionary", Arrays.asList("ub", "dic"), Collections.emptyList(), CommandType.MAIN);
+    public DictionaryCommand()
+    {
+        super("dictionary", Arrays.asList("ub", "dic"), CommandType.PARENT);
     }
 
     @Override
-    public void execute(Message message, String[] args, TextChannel textChannel, Member member) {
-        Lang lang = GuildManager.getOrCreate(textChannel.getGuild()).getLang();
-        if (args.length < 1) {
-            MessagingHelper.sendAsync(textChannel, Messages.COMMAND_DICTIONARY_USAGE.get(lang));
+    public void execute(final CommandContext context)
+    {
+        if (!context.hasArgs())
+        {
+            context.respond(Messages.COMMAND_DICTIONARY_USAGE);
             return;
         }
 
-        String term = String.join(" ", args);
-        JSONArray definitions = FancyBot.getDictionaryClient().getDefinitions(term);
+        final String term = String.join(" ", context.args());
+        final HTTPResponse<JSONArray> response = FancyBot.getDictionaryClient()
+                .retriveDefinitions(term);
 
-        if (definitions == null) {
-            MessagingHelper.sendAsync(textChannel, Messages.DICTIONARY_NOTHING_FOUND.get(lang));
+        if (!response.getData().isPresent())
+        {
+            context.respond(Messages.DICTIONARY_NOTHING_FOUND);
             return;
         }
 
-        JSONObject definition = definitions.getJSONObject(0);
+        final JSONObject definition = response.getData().get().getJSONObject(0);
 
-        int thumbsUp = definition.getInt("thumbs_up");
-        int thumbsDown = definition.getInt("thumbs_down");
-        float ratio = thumbsDown * 100 / thumbsUp;
+        final int thumbsUp = definition.getInt("thumbs_up");
+        final int thumbsDown = definition.getInt("thumbs_down");
+        final int thumbsTotal = thumbsUp + thumbsDown;
+        final int ratio = (thumbsUp / thumbsTotal * 100);
 
-        String rating = "**" + thumbsUp + "** " + Emote.THUMB_UP.asEmote() + " - **" + thumbsDown + "** " + Emote.THUMB_DOWN.asEmote() + " (**" +ratio + "%**)";
-        EmbedBuilder embedBuilder = EmbedHelper.basicEmbed(Color.blue, member);
-        embedBuilder.setTitle("Dictionary: **" + definition.getString("word") + "**", definition.getString("permalink"));
-        embedBuilder.addField("Definition", definition.getString("definition"), false);
-        embedBuilder.addField("Author", definition.getString("author"), true);
-        embedBuilder.addField("Rating", rating, true);
-        embedBuilder.addField("Example", definition.getString("example"), false);
+        final String rating = new MessageBuilder("**{UP}** {EMOTE_UP} - **{DOWN}** {EMOTE_DOWN} (**{RATIO}%**)")
+                .with("{UP}", thumbsUp)
+                .with("{EMOTE_UP}", Emote.THUMB_UP.asEmote())
+                .with("{DOWN}", thumbsDown)
+                .with("{EMOTE_DOWN}", Emote.THUMB_DOWN.asEmote())
+                .with("{RATIO}", ratio)
+                .build();
 
-        MessagingHelper.sendAsync(textChannel, embedBuilder);
+        final EmbedBuilder builder = EmbedHelper.basicEmbed(Color.blue, context);
+        builder.setTitle("Dictionary: **" + definition.getString("word") + "**", definition.getString("permalink"));
+        builder.addField("Definition", definition.getString("definition"), false);
+        builder.addField("Author", definition.getString("author"), true);
+        builder.addField("Rating", rating, true);
+        builder.addField("Example", definition.getString("example"), false);
+
+        context.respond(builder);
     }
 }

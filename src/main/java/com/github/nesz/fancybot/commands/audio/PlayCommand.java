@@ -1,60 +1,52 @@
 package com.github.nesz.fancybot.commands.audio;
 
-import com.github.nesz.fancybot.FancyBot;
-import com.github.nesz.fancybot.commands.AbstractCommand;
+import com.github.nesz.fancybot.config.Constants;
+import com.github.nesz.fancybot.commands.Command;
+import com.github.nesz.fancybot.commands.CommandContext;
 import com.github.nesz.fancybot.commands.CommandType;
 import com.github.nesz.fancybot.objects.audio.Player;
 import com.github.nesz.fancybot.objects.audio.PlayerManager;
-import com.github.nesz.fancybot.objects.guild.GuildManager;
-import com.github.nesz.fancybot.objects.translation.Lang;
 import com.github.nesz.fancybot.objects.translation.Messages;
-import com.github.nesz.fancybot.utils.MessagingHelper;
 import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.TextChannel;
 
 import java.util.Arrays;
 
-public class PlayCommand extends AbstractCommand {
+public class PlayCommand extends Command
+{
 
-    public PlayCommand() {
+    public PlayCommand()
+    {
         super("play", Arrays.asList("pla", "start"), Arrays.asList(
-                Permission.VOICE_CONNECT, Permission.VOICE_SPEAK
-        ), CommandType.MAIN);
+                Permission.VOICE_CONNECT,
+                Permission.VOICE_SPEAK
+        ), CommandType.PARENT);
     }
 
-    private static final String YOUTUBE_BASE = "https://www.youtube.com/watch?v=";
-
     @Override
-    public void execute(Message message, String[] args, TextChannel textChannel, Member member) {
-        Lang lang = GuildManager.getOrCreate(textChannel.getGuild()).getLang();
-        if (args.length < 1) {
-            MessagingHelper.sendAsync(textChannel, Messages.COMMAND_PLAY_USAGE.get(lang));
+    public void execute(final CommandContext context)
+    {
+        if (!context.hasArgs())
+        {
+            context.respond(Messages.COMMAND_PLAY_USAGE);
             return;
         }
 
-        if (PlayerManager.isPlaying(textChannel)) {
-            Player player = PlayerManager.getExisting(textChannel);
-            if (player.getQueue().size() >= PlayerManager.MAX_QUEUE_SIZE) {
-                MessagingHelper.sendAsync(textChannel, Messages.QUEUE_LIMIT_REACHED.get(lang));
+        if (PlayerManager.isPlaying(context.guild()))
+        {
+            final Player player = PlayerManager.getExisting(context.guild());
+            if (player.getQueue().size() >= Constants.MAX_QUEUE_SIZE)
+            {
+                context.respond(Messages.QUEUE_LIMIT_REACHED);
                 return;
             }
         }
 
-        if (!member.getVoiceState().inVoiceChannel()) {
-            MessagingHelper.sendAsync(textChannel, Messages.YOU_HAVE_TO_BE_IN_VOICE_CHANNEL.get(lang));
+        if (!context.member().getVoiceState().inVoiceChannel())
+        {
+            context.respond(Messages.YOU_HAVE_TO_BE_IN_VOICE_CHANNEL);
             return;
         }
 
-        String track = String.join(" ", args);
-
-        if (track.startsWith("http") || track.startsWith("www")) {
-            PlayerManager.loadAndPlay(textChannel, track, member, false);
-            return;
-        }
-
-        String link = YOUTUBE_BASE + FancyBot.getYouTubeClient().getFirstID(track);
-        PlayerManager.loadAndPlay(textChannel, link, member, false);
+        PlayerManager.loadAndPlay(context);
     }
 }

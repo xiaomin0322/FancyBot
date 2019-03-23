@@ -2,6 +2,7 @@ package com.github.nesz.fancybot.http;
 
 import com.github.nesz.fancybot.FancyBot;
 import com.github.nesz.fancybot.http.basic.HTTPClient;
+import com.github.nesz.fancybot.http.basic.HTTPResponse;
 import okhttp3.HttpUrl;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -17,63 +18,96 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-public class GeniusClient extends HTTPClient {
+public class GeniusClient extends HTTPClient
+{
 
     private static final String HOST = "api.genius.com";
     private static final String PATH_SEARCH = "search";
 
     private final String token;
 
-    public GeniusClient(String token) {
+    public GeniusClient(final String token)
+    {
         this.token = token;
     }
 
-    public JSONObject getTopSearch(String query) {
-        HttpUrl url = new HttpUrl.Builder()
+    public HTTPResponse<JSONObject> getTopSearch(final String query)
+    {
+        final HttpUrl url = new HttpUrl.Builder()
                 .scheme(SCHEME_HTTPS)
                 .host(HOST)
                 .addPathSegment(PATH_SEARCH)
                 .addQueryParameter("q", query)
                 .build();
 
-        Request request = new Request.Builder()
+        final Request request = new Request.Builder()
                 .url(url)
                 .addHeader("Authorization", "Bearer " + token)
                 .get()
                 .build();
 
-        try (Response response = asyncRequest(request).get(30, TimeUnit.SECONDS)) {
-            if (response.body() == null) {
-                return null;
+        try (final Response response = callAsync(request).get(30, TimeUnit.SECONDS))
+        {
+
+            if (response.body() == null)
+            {
+                return new HTTPResponse<>(response.code(), null);
             }
-            JSONObject jsonResponse = new JSONObject(response.body().string()).getJSONObject("response");
-            if (!jsonResponse.has("hits")) {
-                return null;
+
+            final JSONObject hits = new JSONObject(response.body().string())
+                    .getJSONObject("response")
+                    .getJSONArray("hits")
+                    .getJSONObject(0)
+                    .getJSONObject("result");
+
+            if (hits == null || hits.isEmpty())
+            {
+                return new HTTPResponse<>(response.code(), null);
             }
-            return jsonResponse.getJSONArray("hits").getJSONObject(0).getJSONObject("result");
-        } catch (IOException | JSONException | InterruptedException | ExecutionException | TimeoutException e) {
-            FancyBot.LOG.error("[GeniusClient] An error occurred while searching for lyrics!", e);
-            return null;
+
+
+            return new HTTPResponse<>(response.code(), hits);
+
+        }
+        catch (final IOException | JSONException | InterruptedException | ExecutionException | TimeoutException e) {
+            FancyBot.LOGGER.error("[GeniusClient] An error occurred while searching for lyrics!", e);
+            return new HTTPResponse<>(-1, null);
         }
     }
 
-    public String getLyrics(String url) {
-        Request request = new Request.Builder()
+    public HTTPResponse<String> getLyrics(final String url)
+    {
+        final Request request = new Request.Builder()
                 .url(url)
                 .build();
-        try (Response response = asyncRequest(request).get(30, TimeUnit.SECONDS)) {
-            if (response.body() == null) {
-                return null;
+
+        try (final Response response = callAsync(request).get(30, TimeUnit.SECONDS))
+        {
+
+            if (response.body() == null)
+            {
+                return new HTTPResponse<>(response.code(), null);
             }
-            Document doc = Jsoup.parse(response.body().string());
-            Elements lyrics = doc.select("div.lyrics");
-            if (!lyrics.hasText()) {
-                return null;
+
+            final Document document = Jsoup.parse(response.body().string());
+            final Elements elements = document.select("div.lyrics");
+
+            if (!elements.hasText())
+            {
+                return new HTTPResponse<>(response.code(), null);
             }
-            return Jsoup.clean(lyrics.html(), Whitelist.none().addTags("br")).trim().replace("<br> ", "");
-        } catch (IOException | JSONException | InterruptedException | ExecutionException | TimeoutException e) {
-            FancyBot.LOG.error("[GeniusClient] An error occurred while getting lyrics!", e);
-            return null;
+
+            final String lyrics = Jsoup.clean(elements.html(), Whitelist.none().addTags("br"))
+                    .trim()
+                    .replace("<br> ", "");
+
+            return new HTTPResponse<>(response.code(), lyrics);
+
+        }
+        catch (final IOException | JSONException | InterruptedException | ExecutionException | TimeoutException e)
+        {
+            FancyBot.LOGGER.error("[GeniusClient] An error occurred while getting lyrics!", e);
+            return new HTTPResponse<>(-1, null);
         }
     }
 }

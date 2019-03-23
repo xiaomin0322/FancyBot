@@ -15,13 +15,15 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class ConfigLoader {
+public class ConfigLoader
+{
 
     private final Class configClass;
     private final String file;
     private final Set<Field> fields;
 
-    public ConfigLoader(Class configClass, String file) {
+    public ConfigLoader(final Class configClass, final String file)
+    {
         this.configClass = configClass;
         this.file = file;
         this.fields = Arrays.stream(Config.class.getDeclaredFields())
@@ -30,25 +32,35 @@ public class ConfigLoader {
                 .collect(Collectors.toSet());
     }
 
-    public void override() {
-        try {
-            String path = FileUtils.pathWithoutJar() + "/" + file;
+    public void override()
+    {
+        try
+        {
+            final String path = FileUtils.executionPath() + "/" + file;
             String json = "";
 
-            try (BufferedReader br = Files.newBufferedReader(Paths.get(path))) {
+            try (final BufferedReader br = Files.newBufferedReader(Paths.get(path)))
+            {
                 json += br.lines().collect(Collectors.joining());
-            } catch (IOException e) {
-                FancyBot.LOG.error("Error occurred while accessing config file", e);
+            }
+            catch (final IOException e)
+            {
+                FancyBot.LOGGER.error("Error occurred while accessing config file", e);
+                System.exit(1);
             }
 
-            JSONObject jo = new JSONObject(json);
+            final JSONObject jo = new JSONObject(json);
 
-            Object temp = configClass.newInstance();
-            for (Field field : fields) {
+            final Object temp = configClass.newInstance();
+            for (final Field field : fields)
+            {
                 field.set(temp, jo.getString(field.getName()));
             }
-        } catch (InstantiationException | IllegalAccessException e) {
-            FancyBot.LOG.error("Error occurred while overriding field", e);
+        }
+        catch (final InstantiationException | IllegalAccessException e)
+        {
+            FancyBot.LOGGER.error("Error occurred while overriding field", e);
+            System.exit(1);
         }
     }
 }

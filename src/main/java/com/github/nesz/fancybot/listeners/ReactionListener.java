@@ -8,28 +8,36 @@ import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionRemoveEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
-public class ReactionListener extends ListenerAdapter {
+public class ReactionListener extends ListenerAdapter
+{
 
     @Override
-    public void onMessageReactionAdd(MessageReactionAddEvent event) {
+    public void onMessageReactionAdd(final MessageReactionAddEvent event)
+    {
         handleReaction(event);
     }
 
     @Override
-    public void onMessageReactionRemove(MessageReactionRemoveEvent event) {
+    public void onMessageReactionRemove(final MessageReactionRemoveEvent event)
+    {
         handleReaction(event);
     }
 
-    private void handleReaction(GenericMessageReactionEvent event) {
-        if (event.getUser().isBot()) {
+    private void handleReaction(final GenericMessageReactionEvent event)
+    {
+        if (event.getUser().isBot())
+        {
             return;
         }
-        if (event.getGuild().getSelfMember().equals(event.getMember())) {
-            return;
-        }
-        TextChannel channel = (TextChannel) event.getChannel();
 
-        Message message = channel.retrieveMessageById(event.getMessageIdLong()).complete();
+        if (event.getGuild().getSelfMember().equals(event.getMember()))
+        {
+            return;
+        }
+
+        final TextChannel channel = (TextChannel) event.getChannel();
+        final Message message = channel.retrieveMessageById(event.getMessageIdLong()).complete();
+
         ReactionManager.handle(message, event.getReaction());
     }
 }

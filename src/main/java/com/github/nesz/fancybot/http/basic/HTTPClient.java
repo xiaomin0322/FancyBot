@@ -6,7 +6,8 @@ import java.io.File;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-public abstract class HTTPClient {
+public abstract class HTTPClient
+{
 
     protected static final String SCHEME_HTTPS = "https";
 
@@ -21,10 +22,12 @@ public abstract class HTTPClient {
             .connectionPool(new ConnectionPool(20, 60, TimeUnit.SECONDS))
             .build();
 
-    private static Interceptor provideCacheInterceptor () {
-        return chain -> {
-            Response response = chain.proceed(chain.request());
-            CacheControl cacheControl = new CacheControl.Builder()
+    private static Interceptor provideCacheInterceptor ()
+    {
+        return chain ->
+        {
+            final Response response = chain.proceed(chain.request());
+            final CacheControl cacheControl = new CacheControl.Builder()
                     .maxAge(7, TimeUnit.DAYS)
                     .build();
 
@@ -34,11 +37,11 @@ public abstract class HTTPClient {
         };
     }
 
-    protected static Future<Response> asyncRequest(Request request) {
-        Call call = HTTP_CLIENT.newCall(request);
+    protected static Future<Response> callAsync(final Request request)
+    {
+        final HTTPResponseFuture result = new HTTPResponseFuture();
 
-        HTTPResponseFuture result = new HTTPResponseFuture();
-
+        final Call call = HTTP_CLIENT.newCall(request);
         call.enqueue(result);
 
         return result.future;

@@ -1,9 +1,10 @@
 package com.github.nesz.fancybot.objects.command;
 
 import com.github.nesz.fancybot.FancyBot;
-import com.github.nesz.fancybot.commands.AbstractCommand;
+import com.github.nesz.fancybot.commands.Command;
+import com.github.nesz.fancybot.commands.CommandContext;
 import com.github.nesz.fancybot.commands.CommandType;
-import com.github.nesz.fancybot.objects.guild.GuildInfo;
+import com.github.nesz.fancybot.objects.guild.GuildCache;
 import com.github.nesz.fancybot.objects.guild.GuildManager;
 import com.github.nesz.fancybot.objects.translation.Messages;
 import com.github.nesz.fancybot.utils.Reflections;
@@ -11,86 +12,107 @@ import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-public class CommandManager {
+public class CommandManager
+{
 
-    private static final Map<String, AbstractCommand> commands = new HashMap<>();
-    private static final Map<String, AbstractCommand> commandsAliases = new HashMap<>();
-    private static final String PREFIX = ".";
+    private static final ExecutorService COMMAND_POOL = Executors.newCachedThreadPool();
+    private static final Map<String, Command> COMMANDS = new ConcurrentHashMap<>();
 
-    static {
-        loadCommands();
-        loadAliases();
+    public static Set<String> getCommands()
+    {
+        return COMMANDS.keySet();
     }
 
-    public static boolean isCommand(String msg) {
-        String command = filterPrefix(msg.trim().split(" ")[0]);
-        return msg.startsWith(PREFIX) && (commands.containsKey(command) || commandsAliases.containsKey(command));
+    private static boolean isCommand(final String msg, final GuildCache guildCache)
+    {
+        final String command = filterPrefix(msg.trim().split(" ")[0], guildCache);
+        return msg.startsWith(guildCache.getPrefix()) && COMMANDS.containsKey(command);
     }
 
-    private static String filterPrefix(String command) {
-        return command.substring(PREFIX.length());
+    private static String filterPrefix(final String command, final GuildCache guildCache)
+    {
+        return command.substring(guildCache.getPrefix().length());
     }
 
-    private static void loadAliases() {
-        for (AbstractCommand command : commands.values()) {
-            for (String alias : command.getAliases()) {
-                commandsAliases.put(alias, command);
-            }
-        }
-    }
+    public static void loadCommands(final String pckg)
+    {
+        try
+        {
+            final Set<Class<? extends Command>> classes = Reflections.getSubtypesOf(pckg, Command.class);
 
-    private static void loadCommands() {
-        try {
-            Set<Class<? extends AbstractCommand>> classes = Reflections.getSubtypesOf("com.github.nesz.fancybot.commands", AbstractCommand.class);
-            for (Class<? extends AbstractCommand> s : classes) {
-                AbstractCommand c = s.getConstructor().newInstance();
-                if (c.getCommandType() == CommandType.SUB) {
+            for (final Class<? extends Command> clazz : classes)
+            {
+                final Command command = clazz.getConstructor().newInstance();
+                if (command.getType() == CommandType.CHILD)
+                {
                     continue;
                 }
-                if (!commands.containsKey(c.getCommand())) {
-                    commands.put(c.getCommand(), c);
-                }
+                COMMANDS.put(command.getCommand(), command);
+                command.getAliases().forEach(s -> COMMANDS.put(s, command));
             }
+
         }
-        catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-            FancyBot.LOG.error("Error while loading commands", e);
+        catch (final InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e)
+        {
+            FancyBot.LOGGER.error("[CommandManager] Error occurred while loading commands", e);
         }
     }
 
-    public static void process(Message message, TextChannel channel, Member member, String incomingMessage) {
-        Member self = channel.getGuild().getSelfMember();
-        String[] input = incomingMessage.trim().split(" ");
+    public static void handle(final GuildMessageReceivedEvent event)
+    {
+        final Member self = event.getGuild().getSelfMember();
+        final TextChannel channel = event.getChannel();
+        final Message message = event.getMessage();
+        final GuildCache guildCache = GuildManager.getOrCreate(channel.getGuild());
 
-        if (!self.hasPermission(channel, Permission.MESSAGE_WRITE)) {
+        if (!isCommand(message.getContentRaw(), guildCache))
+        {
             return;
         }
 
-        String commandName = filterPrefix(input[0]).toLowerCase();
-        AbstractCommand command = commands.containsKey(commandName) ? commands.get(commandName) : commandsAliases.get(commandName);
+        if (!self.hasPermission(channel, Permission.MESSAGE_WRITE))
+        {
+            return;
+        }
+
+        final String[] input = message.getContentRaw().trim().split(" ");
+        final String commandName = filterPrefix(input[0], guildCache).toLowerCase();
+        final Command command = COMMANDS.get(commandName);
 
         boolean hasPermissions = true;
-        Set<String> missingPermissions = new HashSet<>();
-        for (Permission permission : command.getPermissions()) {
-            if (self.hasPermission(permission)) {
+        final Set<String> missingPermissions = new HashSet<>();
+
+        for (final Permission permission : command.getPermissions())
+        {
+            if (self.hasPermission(permission))
+            {
                 continue;
             }
             missingPermissions.add(permission.name());
             hasPermissions = false;
         }
 
-        if (!hasPermissions) {
-            GuildInfo guildInfo = GuildManager.getOrCreate(channel.getGuild());
+        if (!hasPermissions)
+        {
             channel.sendMessage(Messages.NOT_ENOUGH_PERMISSIONS
-                    .get(guildInfo.getLang())
+                    .get(guildCache.getLanguage())
                     .replace("{PERMISSIONS}", String.join(", ", missingPermissions)))
                     .queue();
             return;
         }
 
-        command.execute(message, Arrays.copyOfRange(input, 1, input.length), channel, member);
+        COMMAND_POOL.submit(() ->
+        {
+            final CommandContext commandContext = new CommandContext(event, Arrays.copyOfRange(input, 1, input.length));
+            command.execute(commandContext);
+        });
     }
 }

@@ -1,6 +1,7 @@
 package com.github.nesz.fancybot.objects.translation;
 
-public enum Messages {
+public enum Messages
+{
 
     YOU_HAVE_TO_BE_SERVER_OWNER("youHaveToBeServerOwner"),
     YOU_HAVE_TO_BE_IN_VOICE_CHANNEL("youHaveToBeInVoiceChannel"),
@@ -45,6 +46,12 @@ public enum Messages {
     TRACK_MOVE_INVALID_POSITION("trackMoveInvalidPosition"),
     TRACK_MOVE_SAME_POSITIONS("trackMoveSamePositions"),
     TRACK_MOVED("trackMoved"),
+    FILTER_APPLIED("filterApplied"),
+    FILTER_DISABLED("filterDisabled"),
+    FILTER_NOT_FOUND("filterNotFound"),
+    PEWDIEPIE_COMMAND_RATE_LIMITED("pewdiepieRateLimited"),
+    PEWDIEPIE_COMMAND_ERROR("pewdiepieError"),
+    SELF_MENTION_MESSAGE("selfMentionMessage"),
 
 
     COMMAND_PLAYLIST_USAGE("commandPlaylistUsage"),
@@ -60,16 +67,19 @@ public enum Messages {
     COMMAND_PREFIX_USAGE("commandPrefixUsage"),
     COMMAND_AUTO_PLAY_USAGE("commandAutoPlayUsage"),
     COMMAND_DICTIONARY_USAGE("commandDictionaryUsage"),
-    COMMAND_MOVE_USAGE("commandMoveUsage");
+    COMMAND_MOVE_USAGE("commandMoveUsage"),
+    COMMAND_FILTER_USAGE("commandFilterUsage");
 
 
-    private String key;
+    private final String key;
 
-    Messages(String key) {
+    Messages(final String key)
+    {
         this.key = key;
     }
 
-    public String get(Lang lang) {
-        return Lang.translate(lang, key);
+    public String get(final Language language)
+    {
+        return Language.translate(language, key);
     }
 }

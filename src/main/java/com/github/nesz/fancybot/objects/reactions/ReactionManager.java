@@ -8,26 +8,40 @@ import net.dv8tion.jda.api.entities.MessageReaction;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-public class ReactionManager {
+public class ReactionManager
+{
 
-    private static final Cache<Long, Reaction<?>> REACTIONS = Caffeine.newBuilder().expireAfterAccess(10, TimeUnit.MINUTES).build();
+    private static final Cache<Long, Reaction<?>> REACTIONS = Caffeine.newBuilder()
+            .expireAfterAccess(10, TimeUnit.MINUTES)
+            .build();
 
-    public static void addListener(Message message, Reaction<?> handler) {
+    public static void addListener(final Message message, final Reaction<?> handler)
+    {
         REACTIONS.put(message.getIdLong(), handler);
-        for (Emote emote : handler.getEmotes()) {
+
+        for (final Emote emote : handler.getEmotes())
+        {
             message.addReaction(emote.asSnowflake()).queue();
         }
+
     }
 
-    public static void handle(Message message, MessageReaction reaction) {
-        Reaction<?> listener = REACTIONS.getIfPresent(message.getIdLong());
-        if (listener == null) {
+    public static void handle(final Message message, final MessageReaction reaction)
+    {
+        final Reaction<?> listener = REACTIONS.getIfPresent(message.getIdLong());
+
+        if (listener == null)
+        {
             return;
         }
-        Consumer<Message> action = listener.getConsumer(reaction.getReactionEmote());
-        if (action == null) {
+
+        final Consumer<Message> action = listener.getConsumer(reaction.getReactionEmote());
+
+        if (action == null)
+        {
             return;
         }
+
         action.accept(message);
     }
 }

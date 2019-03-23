@@ -6,28 +6,33 @@ import net.dv8tion.jda.api.audio.AudioSendHandler;
 
 import java.nio.ByteBuffer;
 
-public class AudioHandler implements AudioSendHandler {
+public class AudioHandler implements AudioSendHandler
+{
 
     private final AudioPlayer audioPlayer;
     private AudioFrame lastFrame;
 
-    AudioHandler(AudioPlayer audioPlayer) {
+    AudioHandler(final AudioPlayer audioPlayer)
+    {
         this.audioPlayer = audioPlayer;
     }
 
     @Override
-    public boolean canProvide() {
+    public boolean canProvide()
+    {
         lastFrame = audioPlayer.provide();
         return lastFrame != null;
     }
 
     @Override
-    public ByteBuffer provide20MsAudio() {
+    public ByteBuffer provide20MsAudio()
+    {
         return ByteBuffer.wrap(lastFrame.getData());
     }
 
     @Override
-    public boolean isOpus() {
+    public boolean isOpus()
+    {
         return true;
     }
 }

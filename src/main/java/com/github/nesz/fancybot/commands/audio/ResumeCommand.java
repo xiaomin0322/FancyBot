@@ -1,41 +1,41 @@
 package com.github.nesz.fancybot.commands.audio;
 
-import com.github.nesz.fancybot.commands.AbstractCommand;
+import com.github.nesz.fancybot.commands.Command;
+import com.github.nesz.fancybot.commands.CommandContext;
 import com.github.nesz.fancybot.commands.CommandType;
 import com.github.nesz.fancybot.objects.audio.Player;
 import com.github.nesz.fancybot.objects.audio.PlayerManager;
-import com.github.nesz.fancybot.objects.guild.GuildManager;
-import com.github.nesz.fancybot.objects.translation.Lang;
 import com.github.nesz.fancybot.objects.translation.Messages;
-import com.github.nesz.fancybot.utils.MessagingHelper;
-import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.TextChannel;
 
 import java.util.Arrays;
-import java.util.Collections;
 
-public class ResumeCommand extends AbstractCommand {
+public class ResumeCommand extends Command
+{
 
-    public ResumeCommand() {
-        super("resume", Arrays.asList("res", "go"), Collections.emptyList(), CommandType.MAIN);
+    public ResumeCommand()
+    {
+        super("resume", Arrays.asList("res", "go"), CommandType.PARENT);
     }
 
     @Override
-    public void execute(Message message, String[] args, TextChannel textChannel, Member member) {
-        Lang lang = GuildManager.getOrCreate(textChannel.getGuild()).getLang();
-        if (!PlayerManager.isPlaying(textChannel)) {
-            MessagingHelper.sendAsync(textChannel, Messages.MUSIC_NOT_PLAYING.get(lang));
+    public void execute(final CommandContext context)
+    {
+        if (!PlayerManager.isPlaying(context.guild()))
+        {
+            context.respond(Messages.MUSIC_NOT_PLAYING);
             return;
         }
 
-        Player player = PlayerManager.getExisting(textChannel);
-        if (!member.getVoiceState().inVoiceChannel() || member.getVoiceState().getChannel() != player.getVoiceChannel()) {
-            MessagingHelper.sendAsync(textChannel, Messages.YOU_HAVE_TO_BE_IN_MY_VOICE_CHANNEL.get(lang));
+        final Player player = PlayerManager.getExisting(context.guild());
+
+        if (!PlayerManager.isInPlayingVoiceChannel(player, context.member()))
+        {
+            context.respond(Messages.YOU_HAVE_TO_BE_IN_MY_VOICE_CHANNEL);
             return;
         }
 
-        if (!player.getAudioPlayer().isPaused()) {
+        if (!player.getAudioPlayer().isPaused())
+        {
             return;
         }
 

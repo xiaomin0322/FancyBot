@@ -6,53 +6,64 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
 
-public class Playlist {
+public class Playlist
+{
 
     private final UUID uuid;
     private String name;
     private Long ownerId;
     private final Set<AudioTrack> tracks;
 
-    public Playlist(UUID uuid, String name, Long ownerId) {
+    public Playlist(final UUID uuid, final String name, final Long ownerId)
+    {
         this.uuid = uuid;
         this.name = name;
         this.ownerId = ownerId;
         this.tracks = new LinkedHashSet<>();
     }
 
-    public UUID getUUID() {
+    public UUID getUUID()
+    {
         return uuid;
     }
 
-    public String getName() {
+    public String getName()
+    {
         return name;
     }
 
-    public void setName(String name) {
+    public void setName(final String name)
+    {
         this.name = name;
     }
 
-    public Long getOwnerId() {
+    public Long getOwnerId()
+    {
         return ownerId;
     }
 
-    public void setOwnerId(Long ownerId) {
+    public void setOwnerId(final Long ownerId)
+    {
         this.ownerId = ownerId;
     }
 
-    public Set<AudioTrack> getTracks() {
+    public Set<AudioTrack> getTracks()
+    {
         return tracks;
     }
 
-    public void addTrack(AudioTrack track) {
+    public void addTrack(final AudioTrack track)
+    {
         tracks.add(track);
     }
 
-    public void removeTrack(AudioTrack track) {
+    public void removeTrack(final AudioTrack track)
+    {
         tracks.remove(track);
     }
 
-    public long getLength() {
+    public long getLength()
+    {
         return tracks.stream().mapToLong(value -> value.getInfo().length).sum();
     }
 }

@@ -5,26 +5,34 @@ import net.dv8tion.jda.api.events.guild.voice.GuildVoiceLeaveEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceMoveEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
-public class GuildVoiceListener extends ListenerAdapter {
+public class GuildVoiceListener extends ListenerAdapter
+{
 
     @Override
-    public void onGuildVoiceLeave(GuildVoiceLeaveEvent event) {
-        if (!PlayerManager.isPlaying(event.getGuild())) {
+    public void onGuildVoiceLeave(final GuildVoiceLeaveEvent event)
+    {
+        if (!PlayerManager.isPlaying(event.getGuild()))
+        {
             return;
         }
-        if (PlayerManager.isAlone(event.getChannelLeft())) {
-            PlayerManager.stop(PlayerManager.getExisting(event.getGuild()).getTriggerChannel());
+
+        if (PlayerManager.isAlone(event.getChannelLeft()))
+        {
+            PlayerManager.stop(event.getGuild());
         }
     }
 
     @Override
-    public void onGuildVoiceMove(GuildVoiceMoveEvent event) {
-        if (!PlayerManager.isPlaying(event.getGuild())) {
+    public void onGuildVoiceMove(final GuildVoiceMoveEvent event)
+    {
+        if (!PlayerManager.isPlaying(event.getGuild()))
+        {
             return;
         }
 
-        if (PlayerManager.isAlone(event.getChannelLeft())) {
-            PlayerManager.stop(PlayerManager.getExisting(event.getGuild()).getTriggerChannel());
+        if (PlayerManager.isAlone(event.getChannelLeft()))
+        {
+            PlayerManager.stop(event.getGuild());
         }
     }
 }

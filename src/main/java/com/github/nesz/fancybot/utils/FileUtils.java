@@ -11,66 +11,89 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
-public class FileUtils {
+public class FileUtils
+{
 
-    public static String pathWithoutJar() {
-        try {
+    public static String executionPath()
+    {
+        try
+        {
             return new File(StringUtils.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getParent();
-        } catch (URISyntaxException e) {
+        }
+        catch (final URISyntaxException e)
+        {
             return "";
         }
     }
 
-    public static void saveFile(String file) {
-        try {
-            String path = pathWithoutJar();
+    public static void saveFile(final String file)
+    {
+        try
+        {
+            final String path = executionPath();
 
-            File out = Paths.get(path + "/" + file).toFile();
+            final File out = Paths.get(path + "/" + file).toFile();
 
-            if (out.exists()) {
+            if (out.exists())
+            {
                 return;
             }
 
-            System.out.println(path);
+            final InputStream is = FancyBot.class.getClassLoader().getResourceAsStream(file);
 
-            InputStream is = FancyBot.class.getClassLoader().getResourceAsStream(file);
-
-            if (is == null) {
-                FancyBot.LOG.error("Resource file `" + file + "` does not exists");
+            if (is == null)
+            {
+                FancyBot.LOGGER.error("Resource file `" + file + "` does not exists");
                 return;
             }
 
 
             Files.copy(is, Paths.get(path + "/" + file));
-        } catch (IOException e) {
-            FancyBot.LOG.error("Failed to load resource `" + file + "`", e);
+        }
+        catch (final IOException e)
+        {
+            FancyBot.LOGGER.error("Failed to load resource `" + file + "`", e);
         }
     }
 
-    public static void saveDir(String dir, List<String> files) {
-        try {
-            String path = pathWithoutJar();
-            Path dirPath = Paths.get(path + "/" + dir);
-            if (!Files.exists(dirPath)) {
+    public static void saveDir(final String dir, final List<String> files)
+    {
+        try
+        {
+            final String path = executionPath();
+            final Path dirPath = Paths.get(path + "/" + dir);
+
+            if (!Files.exists(dirPath))
+            {
                 Files.createDirectory(dirPath);
             }
 
 
-            for (String file : files) {
-                File f = new File(dirPath.toString() + "/" + file);
-                if (f.exists()) {
+            for (final String file : files)
+            {
+
+                final File f = new File(dirPath.toString() + "/" + file);
+
+                if (f.exists())
+                {
                     continue;
                 }
-                InputStream is = FancyBot.class.getClassLoader().getResourceAsStream(dir + "/" + file);
-                if (is == null) {
-                    FancyBot.LOG.error("Resource file `" + file + "` does not exists");
+
+                final InputStream is = FancyBot.class.getClassLoader().getResourceAsStream(dir + "/" + file);
+
+                if (is == null)
+                {
+                    FancyBot.LOGGER.error("Resource file `" + file + "` does not exists");
                     continue;
                 }
+
                 Files.copy(is, Paths.get(dirPath.toString() + "/" + file));
             }
 
-        } catch (IOException e) {
-            FancyBot.LOG.error(e);
+        }
+        catch (final IOException e)
+        {
+            FancyBot.LOGGER.error(e);
         }
     }
 

@@ -1,47 +1,51 @@
 package com.github.nesz.fancybot.commands.audio;
 
-import com.github.nesz.fancybot.commands.AbstractCommand;
+import com.github.nesz.fancybot.commands.Command;
+import com.github.nesz.fancybot.commands.CommandContext;
 import com.github.nesz.fancybot.commands.CommandType;
-import com.github.nesz.fancybot.objects.guild.GuildInfo;
-import com.github.nesz.fancybot.objects.guild.GuildManager;
 import com.github.nesz.fancybot.objects.translation.Messages;
-import com.github.nesz.fancybot.utils.MessagingHelper;
-import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.TextChannel;
 
 import java.util.Arrays;
-import java.util.Collections;
 
-public class AutoPlayCommand extends AbstractCommand {
+public class AutoPlayCommand extends Command
+{
 
-    public AutoPlayCommand() {
-        super("autoplay", Arrays.asList("ap", "aplay"), Collections.emptyList(), CommandType.MAIN);
+    public AutoPlayCommand()
+    {
+        super("autoplay", Arrays.asList("ap", "aplay"), CommandType.PARENT);
     }
 
     @Override
-    public void execute(Message message, String[] args, TextChannel textChannel, Member member) {
-        GuildInfo guildInfo = GuildManager.getOrCreate(textChannel.getGuild());
-        if (args.length == 1) {
-            if (args[0].equalsIgnoreCase("on")) {
-                guildInfo.setAutoPlay(true);
+    public void execute(final CommandContext context)
+    {
+        if (!context.hasArgs())
+        {
+            context.guildCache().setAutoPlay(!context.guildCache().isAutoPlay());
+        }
+        else
+        {
+            if (context.arg(0).equalsIgnoreCase("on"))
+            {
+                context.guildCache().setAutoPlay(true);
             }
-            else if (args[0].equalsIgnoreCase("off")) {
-                guildInfo.setAutoPlay(false);
+            else if (context.arg(0).equalsIgnoreCase("off"))
+            {
+                context.guildCache().setAutoPlay(false);
             }
-            else {
-                MessagingHelper.sendAsync(textChannel, Messages.COMMAND_AUTO_PLAY_USAGE.get(guildInfo.getLang()));
+            else
+            {
+                context.respond(Messages.COMMAND_AUTO_PLAY_USAGE);
                 return;
             }
         }
-        else {
-            guildInfo.setAutoPlay(!guildInfo.isAutoPlay());
+
+        if (context.guildCache().isAutoPlay())
+        {
+            context.respond(Messages.AUTO_PLAY_TURNED_ON);
         }
-        if (guildInfo.isAutoPlay()) {
-            MessagingHelper.sendAsync(textChannel, Messages.AUTO_PLAY_TURNED_ON.get(guildInfo.getLang()));
-        }
-        else {
-            MessagingHelper.sendAsync(textChannel, Messages.AUTO_PLAY_TURNED_OFF.get(guildInfo.getLang()));
+        else
+        {
+            context.respond(Messages.AUTO_PLAY_TURNED_OFF);
         }
     }
 }

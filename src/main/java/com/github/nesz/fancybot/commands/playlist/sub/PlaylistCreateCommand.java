@@ -1,40 +1,45 @@
 package com.github.nesz.fancybot.commands.playlist.sub;
 
-import com.github.nesz.fancybot.commands.AbstractCommand;
+import com.github.nesz.fancybot.config.Constants;
+import com.github.nesz.fancybot.commands.Command;
+import com.github.nesz.fancybot.commands.CommandContext;
 import com.github.nesz.fancybot.commands.CommandType;
-import com.github.nesz.fancybot.config.Config;
-import com.github.nesz.fancybot.objects.guild.GuildManager;
 import com.github.nesz.fancybot.objects.playlist.PlaylistManager;
-import com.github.nesz.fancybot.objects.translation.Lang;
-import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.TextChannel;
 
-import java.util.Collections;
+public class PlaylistCreateCommand extends Command
+{
 
-public class PlaylistCreateCommand extends AbstractCommand {
-
-    public PlaylistCreateCommand() {
-        super("create", Collections.emptyList(), Collections.emptyList(), CommandType.SUB);
+    public PlaylistCreateCommand()
+    {
+        super("create", CommandType.CHILD);
     }
 
     @Override
-    public void execute(Message message, String[] args, TextChannel textChannel, Member member) {
-        Lang lang = GuildManager.getOrCreate(textChannel.getGuild()).getLang();
+    public void execute(final CommandContext context)
+    {
+        final String name = String.join(" ", context.args());
 
-        String name = String.join(" ", args);
-
-        if (name.length() > Config.PLAYLIST_NAME_LENGTH) {
-            textChannel.sendMessage("Playlist name cannot be longer than 32 characters").queue();
+        if (name.length() > Constants.PLAYLIST_NAME_LENGTH_MAX)
+        {
+            context.respond("Playlist name cannot be longer than 32 characters");
             return;
         }
 
-        boolean success = PlaylistManager.create(name, member.getUser().getIdLong());
-        if (success) {
-            textChannel.sendMessage("Playlist '" + name + "' created.").queue();
+        if (name.length() < Constants.PLAYLIST_NAME_LENGTH_MIN)
+        {
+            context.respond("Playlist name cannot be longer than 3 characters");
+            return;
         }
-        else {
-            textChannel.sendMessage("Error occurred while creating playlist, try again later").queue();
+
+        final boolean success = PlaylistManager.create(name, context.author().getIdLong());
+
+        if (success)
+        {
+            context.respond("Playlist '" + name + "' created.");
+        }
+        else
+        {
+            context.respond("Error occurred while creating playlist, try again later");
         }
 
     }

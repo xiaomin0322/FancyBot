@@ -2,165 +2,164 @@ package com.github.nesz.fancybot.http;
 
 import com.github.nesz.fancybot.FancyBot;
 import com.github.nesz.fancybot.http.basic.HTTPClient;
+import com.github.nesz.fancybot.http.basic.HTTPResponse;
 import com.github.nesz.fancybot.utils.AudioUtils;
+import com.github.nesz.fancybot.utils.StringUtils;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
+import okhttp3.CacheControl;
 import okhttp3.HttpUrl;
 import okhttp3.Request;
 import okhttp3.Response;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 import java.io.IOException;
-import java.util.*;
+import java.net.URLDecoder;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
-public class YouTubeClient extends HTTPClient {
+public class YouTubeClient extends HTTPClient
+{
 
-    private static final String SEARCH_FIELDS = "items(id/videoId)";
     private static final String VIDEO_FIELDS
-            = "items(id/videoId,contentDetails/duration,snippet/title,snippet/channelTitle,snippet/liveBroadcastContent)";
-    private static final String RELATED_FIELDS = "items(id,snippet/title,snippet/channelTitle,snippet/liveBroadcastContent)";
+        = "items(id/videoId,contentDetails/duration,snippet/title,snippet/channelTitle,snippet/liveBroadcastContent)";
+    private static final String CHANNEL_FIELDS
+            = "items(id,statistics/viewCount,statistics/subscriberCount,statistics/videoCount)";
 
-    private static final String HOST   = "www.googleapis.com";
-    private static final String PATH_SEARCH = "youtube/v3/search";
-    private static final String PATH_VIDEOS = "youtube/v3/videos";
+    private static final String HOST_API      = "www.googleapis.com";
+    private static final String HOST_WEB      = "www.youtube.com";
+    private static final String PATH_VIDEOS   = "youtube/v3/videos";
+    private static final String PATH_CHANNELS = "youtube/v3/channels";
 
     private final String token;
 
-    public YouTubeClient(String token) {
+    public YouTubeClient(final String token)
+    {
         this.token = token;
     }
 
-    public AudioTrack getRelatedVideo(String id) {
-        HttpUrl url = new HttpUrl.Builder()
+    /*
+        With youtube API we are able to make only 100 queries so Im scrapping data directly :(
+     */
+    private static final List<String> REQUIRED_KEYS = Arrays.asList("title", "id", "author", "length_seconds");
+    private static final String SCRAPPING_KEYWORD = "'RELATED_PLAYER_ARGS'";
+    private static final String SCRAPPING_START = "yt.setConfig(";
+    private static final String SCRAPPING_END = ");";
+
+    public HTTPResponse<List<AudioTrack>> retrieveRelatedVideos(final String id)
+    {
+        final HttpUrl url = new HttpUrl.Builder()
                 .scheme(SCHEME_HTTPS)
-                .host(HOST)
-                .addPathSegments(PATH_SEARCH)
-                .addQueryParameter("relatedToVideoId", id)
-                .addQueryParameter("part", "snippet")
-                .addQueryParameter("maxResults", "5") //When set to 1 its not guaranteed to return anything, 5 just to be sure
-                .addQueryParameter("type", "video")
-                .addEncodedQueryParameter("fields", RELATED_FIELDS)
-                .addQueryParameter("key", token)
+                .host(HOST_WEB)
+                .addPathSegment("watch")
+                .addQueryParameter("v", id)
                 .build();
 
-        Request request = new Request.Builder()
+        final Request request = new Request.Builder()
                 .url(url)
                 .get()
                 .build();
 
-
-        try (Response response = asyncRequest(request).get(30, TimeUnit.SECONDS)) {
-            if (response.body() == null) {
-                return null;
-            }
-            JSONObject object = new JSONObject(response.body().string());
-            if (!object.has("items")) {
-                return null;
-            }
-            JSONArray items = object.getJSONArray("items");
-            if (items.isEmpty()) {
-                return null;
+        try (final Response response = callAsync(request).get(30, TimeUnit.SECONDS))
+        {
+            if (response.body() == null)
+            {
+                return new HTTPResponse<>(response.code(), null);
             }
 
-            JSONObject trackData = items.getJSONObject(0);
-            String trackId = trackData.getJSONObject("id").getString("videoId");
+            final Document document = Jsoup.parse(response.body().string());
+            final Elements elements = document.getElementsByTag("script");
 
-            return AudioUtils.buildTrack(
-                    trackId,
-                    trackData.getJSONObject("snippet").getString("title"),
-                    trackData.getJSONObject("snippet").getString("channelTitle"),
-                    trackData.getJSONObject("snippet").getString("liveBroadcastContent").contains("live"),
-                    durationForVideos(Collections.singletonList(trackId)).get(trackId)
-            );
-        } catch (IOException | JSONException | InterruptedException | ExecutionException | TimeoutException e) {
-            FancyBot.LOG.error("[YouTubeClient] An error occurred while searching related video!", e);
-            return null;
+            {
+                // data for me as i can fix unusual cases that are not covered :)
+                final HTTPResponse<String> post = FancyBot.getHastebinClient().post(document.toString());
+                if (post.getData().isPresent())
+                {
+                    FancyBot.LOGGER.debug("DATA FROM REQUEST: " + post.getData().get());
+                }
+                else
+                    {
+                    FancyBot.LOGGER.debug("NO DATA IS PRESENT, RESPONSE CODE: " + post.getResponseCode());
+                }
+            }
+
+            for (final Element element : elements)
+            {
+                if (!element.html().contains(SCRAPPING_KEYWORD))
+                {
+                    continue;
+                }
+
+                final String scrap = StringUtils.substringBetween(element.html(), SCRAPPING_START, SCRAPPING_END);
+
+                if (scrap == null)
+                {
+                    return new HTTPResponse<>(response.code(), null);
+                }
+
+                final List<AudioTrack> relatedTracks = new ArrayList<>();
+
+                final String rawData = new JSONObject(scrap)
+                        .getJSONObject("RELATED_PLAYER_ARGS")
+                        .getString("rvs");
+
+                final List<String> rawDataParts = Arrays.stream(rawData.split(","))
+                        .collect(Collectors.toList());
+
+                for (final String video : rawDataParts) {
+
+                    final List<String> data = Arrays.stream(video.split("&"))
+                            .collect(Collectors.toList());
+
+                    final Map<String, String> dataMap = data.stream()
+                            .map(s -> s.split("=", 2))
+                            .filter(s -> s.length == 2)
+                            .collect(Collectors.toMap(a -> a[0], a -> a[1]));
+
+                    final boolean hasKeys = REQUIRED_KEYS.stream().allMatch(dataMap::containsKey);
+
+                    if (!hasKeys)
+                    {
+                        continue;
+                    }
+
+                    relatedTracks.add(AudioUtils.buildTrack(
+                            dataMap.get("id"),
+                            URLDecoder.decode(dataMap.get("title"), "UTF-8"),
+                            URLDecoder.decode(dataMap.get("author"), "UTF-8"),
+                            false,
+                            TimeUnit.SECONDS.toMillis(Long.valueOf(dataMap.get("length_seconds")))
+                    ));
+                }
+
+                return new HTTPResponse<>(response.code(), relatedTracks);
+            }
+            return new HTTPResponse<>(response.code(), null);
+
+        }
+        catch (final IOException | JSONException | InterruptedException | ExecutionException | TimeoutException e)
+        {
+            FancyBot.LOGGER.error("[YouTubeClient] An error occurred while scrapping related videos!", e);
+            return new HTTPResponse<>(-1, null);
         }
     }
 
-    public String getFirstID(String query) {
-        HttpUrl url = new HttpUrl.Builder()
+    public HTTPResponse<JSONObject> retrieveVideo(final String id)
+    {
+        final HttpUrl url = new HttpUrl.Builder()
                 .scheme(SCHEME_HTTPS)
-                .host(HOST)
-                .addPathSegments(PATH_SEARCH)
-                .addQueryParameter("q", query)
-                .addQueryParameter("key", token)
-                .addQueryParameter("part", "snippet")
-                .addQueryParameter("maxResults", "1")
-                .addEncodedQueryParameter("fields", SEARCH_FIELDS)
-                .build();
-
-        Request request = new Request.Builder()
-                .url(url)
-                .get()
-                .build();
-
-        try (Response response = asyncRequest(request).get(30, TimeUnit.SECONDS)) {
-            if (response.body() == null) {
-                return null;
-            }
-            JSONObject object = new JSONObject(response.body().string());
-            if (!object.has("items")) {
-                return null;
-            }
-            JSONArray items = object.getJSONArray("items");
-            if (items.isEmpty()) {
-                return null;
-            }
-            return items.getJSONObject(0).getJSONObject("id").getString("videoId");
-        } catch (IOException | JSONException | InterruptedException | ExecutionException | TimeoutException e) {
-            FancyBot.LOG.error("[YouTubeClient] An error occurred while searching video!", e);
-            return null;
-        }
-    }
-
-    private Map<String, Long> durationForVideos(List<String> ids) {
-        HttpUrl url = new HttpUrl.Builder()
-                .scheme(SCHEME_HTTPS)
-                .host(HOST)
-                .addPathSegments(PATH_VIDEOS)
-                .addQueryParameter("part", "contentDetails")
-                .addEncodedQueryParameter("id", String.join(",", ids))
-                .addQueryParameter("key", token)
-                .build();
-
-        Request request = new Request.Builder()
-                .url(url)
-                .get()
-                .build();
-
-        try (Response response = asyncRequest(request).get(30, TimeUnit.SECONDS)) {
-            if (response.body() == null) {
-                return Collections.emptyMap();
-            }
-            JSONObject object = new JSONObject(response.body().string());
-            if (!object.has("items")) {
-                return Collections.emptyMap();
-            }
-            JSONArray items = object.getJSONArray("items");
-            if (items.isEmpty()) {
-                return Collections.emptyMap();
-            }
-            Map<String, Long> map = new HashMap<>();
-            for (int i = 0 ; i < items.length(); i++) {
-                JSONObject current = items.getJSONObject(i);
-                map.put(current.getString("id"), toLongDuration(current.getJSONObject("contentDetails").getString("duration")));
-            }
-            return map;
-        } catch (IOException | JSONException | InterruptedException | ExecutionException | TimeoutException e) {
-            FancyBot.LOG.error("[YouTubeClient] An error occurred while getting videos duration!", e);
-            return Collections.emptyMap();
-        }
-    }
-
-    public JSONObject getVideo(String id) {
-        HttpUrl url = new HttpUrl.Builder()
-                .scheme(SCHEME_HTTPS)
-                .host(HOST)
+                .host(HOST_API)
                 .addPathSegments(PATH_VIDEOS)
                 .addQueryParameter("id", id)
                 .addQueryParameter("key", token)
@@ -168,38 +167,91 @@ public class YouTubeClient extends HTTPClient {
                 .addEncodedQueryParameter("fields", VIDEO_FIELDS)
                 .build();
 
-        Request request = new Request.Builder()
+        final Request request = new Request.Builder()
                 .url(url)
                 .get()
                 .build();
 
-        try (Response response = asyncRequest(request).get(30, TimeUnit.SECONDS)) {
-            if (response.body() == null) {
-                return null;
+        try (final Response response = callAsync(request).get(30, TimeUnit.SECONDS))
+        {
+            if (response.body() == null)
+            {
+                return new HTTPResponse<>(response.code(), null);
             }
-            JSONArray items = new JSONObject(response.body().string()).getJSONArray("items");
-            if (items.isEmpty()) {
-                return null;
+
+            final JSONObject item = new JSONObject(response.body().string()).getJSONArray("items").getJSONObject(0);
+
+            if (item == null)
+            {
+                return new HTTPResponse<>(response.code(), null);
             }
-            return items.getJSONObject(0);
-        } catch (IOException | JSONException | InterruptedException | ExecutionException | TimeoutException e) {
-            FancyBot.LOG.error("[YouTubeClient] An error occurred while getting video!", e);
-            return null;
+
+            return new HTTPResponse<>(response.code(), item);
+        }
+        catch (final IOException | JSONException | InterruptedException | ExecutionException | TimeoutException e)
+        {
+            FancyBot.LOGGER.error("[YouTubeClient] An error occurred while getting video!", e);
+            return new HTTPResponse<>(-1, null);
         }
     }
 
-    public long toLongDuration(String dur) {
+    public HTTPResponse<JSONArray> retrieveDataForChannels(final List<String> ids) {
+        final HttpUrl url = new HttpUrl.Builder()
+                .scheme(SCHEME_HTTPS)
+                .host(HOST_API)
+                .addPathSegments(PATH_CHANNELS)
+                .addQueryParameter("id", String.join(",", ids))
+                .addQueryParameter("key", token)
+                .addEncodedQueryParameter("part", "statistics")
+                .addEncodedQueryParameter("fields", CHANNEL_FIELDS)
+                .build();
+
+        final Request request = new Request.Builder()
+                .url(url)
+                .get()
+                .cacheControl(CacheControl.FORCE_NETWORK)
+                .build();
+
+        try (final Response response = callAsync(request).get(30, TimeUnit.SECONDS))
+        {
+            if (response.body() == null)
+            {
+                return new HTTPResponse<>(response.code(), null);
+            }
+
+            final JSONArray items = new JSONObject(response.body().string()).getJSONArray("items");
+
+            if (items == null)
+            {
+                return new HTTPResponse<>(response.code(), null);
+            }
+
+            return new HTTPResponse<>(response.code(), items);
+        }
+        catch (final IOException | JSONException | InterruptedException | ExecutionException | TimeoutException e)
+        {
+            FancyBot.LOGGER.error("[YouTubeClient] An error occurred while getting channels data!", e);
+            return new HTTPResponse<>(-1, null);
+        }
+    }
+
+    public long toLongDuration(final String dur)
+    {
         String time = dur.substring(2);
         long duration = 0L;
-        Object[][] indexes = new Object[][] { { "H", 3600 }, { "M", 60 }, { "S", 1 } };
-        for (Object[] index1 : indexes) {
-            int index = time.indexOf((String) index1[0]);
-            if (index != -1) {
-                String value = time.substring(0, index);
+        final Object[][] indexes = new Object[][] { { "H", 3600 }, { "M", 60 }, { "S", 1 } };
+
+        for (final Object[] index1 : indexes)
+        {
+            final int index = time.indexOf((String) index1[0]);
+            if (index != -1)
+            {
+                final String value = time.substring(0, index);
                 duration += Integer.parseInt(value) * (int) index1[1] * 1000;
                 time = time.substring(value.length() + 1);
             }
         }
+
         return duration;
     }
 
