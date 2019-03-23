@@ -66,18 +66,6 @@ public class LimitedList<T> extends ArrayList<T>
     @Override
     public void add(final int index, final T element)
     {
-        throw new UnsupportedOperationException("Elements may not be added to a fixed size List, use set() instead.");
-    }
-
-    @Override
-    public boolean remove(final Object o)
-    {
-        throw new UnsupportedOperationException("Elements may not be removed from a fixed size List.");
-    }
-
-    @Override
-    protected void removeRange(final int fromIndex, final int toIndex)
-    {
-        throw new UnsupportedOperationException("Elements may not be removed from a fixed size List.");
+        throw new UnsupportedOperationException("Elements may not be added to a limited size List, use push() instead.");
     }
 }
